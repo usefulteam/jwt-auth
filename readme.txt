@@ -10,6 +10,8 @@ Stable tag: trunk
 License: GPL-3.0 License
 License URI: https://oss.ninja/gpl-3.0?organization=Useful%20Team&project=WordPress%20JWT%20Auth
 
+Create JSON Web Token Authentication in WordPress.
+
 == Description ==
 WordPress JSON Web Token Authentication allows you to do REST API authentication via token. It is a simple, non-complex, and easy to use.
 
