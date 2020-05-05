@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<ruleset name="Custom">
+	<description>Custom ruleset for WordPress platform</description>
+
+	<rule ref="WordPress">
+		<exclude name="Squiz.PHP.CommentedOutCode" />
+	</rule>
+</ruleset>

@@ -1,0 +1,16 @@
+{
+    "name": "usefulteam/jwt-auth",
+    "description": "JWT Auth",
+    "type": "wordpress-plugin",
+    "license": "GPLv3",
+    "authors": [
+        {
+            "name": "Bagus",
+            "email": "25834188+contactjavas@users.noreply.github.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "firebase/php-jwt": "^5.2"
+    }
+}
