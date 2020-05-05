@@ -7,7 +7,7 @@ Requires at least: 5.2
 Tested up to: 5.4
 Requires PHP: 7.2
 Stable tag: trunk
-License: GPL-3.0 License
+License: GPL-3.0
 License URI: https://oss.ninja/gpl-3.0?organization=Useful%20Team&project=WordPress%20JWT%20Auth
 
 Create JSON Web Token Authentication in WordPress.
