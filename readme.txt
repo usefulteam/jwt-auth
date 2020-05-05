@@ -43,7 +43,7 @@ SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
 
 = Configurate the Secret Key =
 
-The JWT needs a **secret key** to sign the token. This **secret key** must be unique and never revealed.
+The JWT needs a **secret key** to sign the token. This **secret key** must be unique and never be revealed.
 
 To add the **secret key**, edit your wp-config.php file and add a new constant called **JWT_AUTH_SECRET_KEY**.
 
@@ -71,17 +71,10 @@ When the plugin is activated, a new namespace is added.
 /jwt-auth/v1
 `
 
-Also, two new endpoints are added to this namespace.
-
-**POST**
+Also, two new *POST* endpoints are added to this namespace.
 
 `
 /wp-json/jwt-auth/v1/token
-`
-
-**POST**
-
-`
 /wp-json/jwt-auth/v1/token/validate
 `
 
@@ -91,7 +84,7 @@ Also, two new endpoints are added to this namespace.
 /wp-json/jwt-auth/v1/token
 `
 
-To generate token, submit a POST request to this entry point. With `username` and `password` as the parameters.
+To generate token, submit a POST request to this endpoint. With `username` and `password` as the parameters.
 
 It will validates the user credentials, and returns success response including a token if the authentication is correct or returns an error response if the authentication is failed.
 
@@ -369,13 +362,13 @@ Finally activate the plugin within the plugin dashboard.
 == Frequently Asked Questions ==
 = Do you have GitHub repository for this plugin? =
 
-You can visit the GitHub repository at https://github.com/usefulteam/jwt-auth/
+You can visit the GitHub repository [here](https://github.com/usefulteam/jwt-auth/)
 
 = I use this plugin on my projects. I want this plugin to keep alive and maintained, how can i help? =
 
-You can help this plugin stay alive and maintained by giving **5 Stars** Rating/ Review or:
-- https://paypal.me/bagusjavas
-- https://www.patreon.com/bagus
+You can help this plugin stay alive and maintained by giving **5 Stars** Rating/ Review or donating me via:
+- [PayPal](https://paypal.me/bagusjavas)
+- [Patreon](https://www.patreon.com/bagus)
 
 == Screenshots ==
 1. Success response when trying to generate token
