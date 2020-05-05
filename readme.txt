@@ -381,8 +381,8 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 3. Other error responses
 
 == Changelog ==
-= 0.1.0 =
-- Initial release
+= 0.1.1 =
+- Working version
 
 == Upgrade Notice ==
 Just update the plugin

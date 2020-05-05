@@ -190,12 +190,14 @@ class Auth {
 	/**
 	 * Determine if given response is an error response.
 	 *
-	 * @param WP_REST_Response $response The response.
+	 * @param mixed $response The response.
 	 * @return boolean
 	 */
-	public function is_error_response( WP_REST_Response $response ) {
-		if ( ! isset( $response->data['success'] ) || ! $response->data['success'] ) {
-			return true;
+	public function is_error_response( $response ) {
+		if ( is_array( $response->data ) ) {
+			if ( ! isset( $response->data['success'] ) || ! $response->data['success'] ) {
+				return true;
+			}
 		}
 
 		return false;
@@ -299,7 +301,7 @@ class Auth {
 			}
 
 			// Everything looks good return the token if $return_payload is set to true.
-			if ( ! $return_payload ) {
+			if ( $return_payload ) {
 				return $payload;
 			}
 
@@ -385,13 +387,17 @@ class Auth {
 	 * Filter to hook the rest_pre_dispatch, if there is an error in the request
 	 * send it, if there is no error just continue with the current request.
 	 *
-	 * @param WP_REST_Response $result Response to replace the requested version with.
-	 * @param WP_REST_Server   $server Server instance.
-	 * @param WP_REST_Request  $request The request.
+	 * @param mixed           $result Can be anything a normal endpoint can return, or null to not hijack the request.
+	 * @param WP_REST_Server  $server Server instance.
+	 * @param WP_REST_Request $request The request.
 	 *
-	 * @return WP_REST_Response $result The request result.
+	 * @return mixed $result
 	 */
-	public function rest_pre_dispatch( WP_REST_Response $result, WP_REST_Server $server, WP_REST_Request $request ) {
+	public function rest_pre_dispatch( $result, WP_REST_Server $server, WP_REST_Request $request ) {
+		if ( empty( $result ) ) {
+			return $result;
+		}
+
 		if ( $this->is_error_response( $this->jwt_error ) ) {
 			return $this->jwt_error;
 		}
