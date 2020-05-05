@@ -94,7 +94,7 @@ Also, two new endpoints are added to this namespace.
 
 `/wp-json/jwt-auth/v1/token`
 
-To generate token, submit a POST request to this entry point. With `username` and `password` as the parameters.
+To generate token, submit a POST request to this endpoint. With `username` and `password` as the parameters.
 
 It will validates the user credentials, and returns success response including a token if the authentication is correct or returns an error response if the authentication is failed.
 
