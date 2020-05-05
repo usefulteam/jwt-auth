@@ -207,11 +207,11 @@ class Auth {
 	 * Main validation function, this function try to get the Autentication
 	 * headers and decoded.
 	 *
-	 * @param bool $return_payload Whether to only return the payload or not.
+	 * @param bool $output Whether to only return the payload or not.
 	 *
 	 * @return WP_REST_Response | Array Returns WP_REST_Response or token's $payload.
 	 */
-	public function validate_token( $return_payload = false ) {
+	public function validate_token( $output = true ) {
 		/**
 		 * Looking for the HTTP_AUTHORIZATION header, if not present just
 		 * return the user.
@@ -300,12 +300,12 @@ class Auth {
 				);
 			}
 
-			// Everything looks good return the token if $return_payload is set to true.
-			if ( $return_payload ) {
+			// Everything looks good return the token if $output is set to false.
+			if ( ! $output ) {
 				return $payload;
 			}
 
-			// If the $return_payload is set to false, then return success response.
+			// Otherwise, then return success response.
 			return new WP_REST_Response(
 				array(
 					'success'    => true,
@@ -361,7 +361,7 @@ class Auth {
 			return $user_id;
 		}
 
-		$payload = $this->validate_token( true );
+		$payload = $this->validate_token( false );
 
 		// If $payload is an error response, then return the default $user_id.
 		if ( $this->is_error_response( $payload ) ) {
