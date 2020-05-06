@@ -120,8 +120,18 @@ It will validates the user credentials, and returns success response including a
 }
 `
 
-Once you get the token, you must store it somewhere in your application, e.g. in a **cookie** or using **localstorage**.
-Then you should pass this token as _Bearer Authentication_ header to every API call. The header format is `Authorization: Bearer your-generated-token` and here's an example: 
+Once you get the token, you must store it somewhere in your application. It can be:
+- using **cookie** 
+- or using **localstorage** 
+- or using a wrapper like [localForage](https://localforage.github.io/localForage/) or [PouchDB](https://pouchdb.com/)
+- or using local database like SQLite or [Hive](https://docs.hivedb.dev/#/)
+- or your choice based on app you develop ;)
+
+Then you should pass this token as _Bearer Authentication_ header to every API call. The header format is:
+
+`Authorization: Bearer your-generated-token`
+
+and here's an example:
 
 `
 "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvcG9pbnRzLmNvdXZlZS5jby5pZCIsImlhdCI6MTU4ODQ5OTE0OSwibmJmIjoxNTg4NDk5MTQ5LCJleHAiOjE1ODkxMDM5NDksImRhdGEiOnsidXNlciI6eyJpZCI6MX19fQ.w3pf5PslhviHohmiGF-JlPZV00XWE9c2MfvBK7Su9Fw";
