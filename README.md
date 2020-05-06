@@ -154,6 +154,7 @@ If the token is valid, the API call flow will continue as always.
 ## Validating Token
 
 You likely **don't need** to validate the token your self. The plugin handle it for you like explained above.
+
 But if you want to test or validate the token manually, then send a **POST** request to this endpoint (don't forget to set your _Bearer Authorization_ header):
 
 `/wp-json/jwt-auth/v1/token/validate`
