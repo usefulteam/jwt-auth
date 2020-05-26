@@ -388,10 +388,10 @@ class Auth {
 			if ( 'jwt_auth_no_auth_header' === $payload->data['code'] ||
 				'jwt_auth_bad_auth_header' === $payload->data['code']
 			) {
-				if (
-					'/wp-json/jwt-auth/v1/token' !== $_SERVER['REQUEST_URI']
-				) {
-					$this->jwt_error = $payload;
+				if ( '/wp-json/jwt-auth/v1/token' !== $_SERVER['REQUEST_URI'] ) {
+					if ( ! $this->is_whitelisted() ) {
+						$this->jwt_error = $payload;
+					}
 				}
 			} else {
 				$this->jwt_error = $payload;
@@ -402,6 +402,53 @@ class Auth {
 
 		// Everything is ok here, return the user ID stored in the token.
 		return $payload->data->user->id;
+	}
+
+	/**
+	 * Check whether or not current endpoint is whitelisted.
+	 *
+	 * @return bool
+	 */
+	public function is_whitelisted() {
+		$whitelist = apply_filters( 'jwt_auth_whitelist', array() );
+
+		if ( empty( $whitelist ) || ! is_array( $whitelist ) ) {
+			return false;
+		}
+
+		$request_uri = $_SERVER['REQUEST_URI'];
+
+		// Only use string before "?" sign.
+		if ( false !== stripos( $request_uri, '?' ) ) {
+			$split       = explode( '?', $request_uri );
+			$request_uri = $split[0];
+		}
+
+		// Let's remove trailingslash for easier checking.
+		$request_uri = untrailingslashit( $request_uri );
+
+		foreach ( $whitelist as $endpoint ) {
+			// If the endpoint doesn't contain * sign.
+			if ( false === stripos( $endpoint, '*' ) ) {
+				$endpoint = untrailingslashit( $endpoint );
+
+				if ( $endpoint === $request_uri ) {
+					return true;
+				}
+			} else {
+				/**
+				 * TODO: Maybe use regex to match glob-style pattern.
+				 */
+				$endpoint = str_ireplace( '*', '', $endpoint );
+				$endpoint = untrailingslashit( $endpoint );
+
+				if ( 0 === stripos( $request_uri, $endpoint ) ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	/**
