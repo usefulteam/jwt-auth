@@ -159,6 +159,7 @@ class Auth {
 	 * @return WP_REST_Response|string Return as raw token string or as a formatted WP_REST_Response.
 	 */
 	public function generate_token( $user, $return_raw = true ) {
+		$secret_key = defined( 'JWT_AUTH_SECRET_KEY' ) ? JWT_AUTH_SECRET_KEY : false;
 		$issued_at  = time();
 		$not_before = $issued_at;
 		$not_before = apply_filters( 'jwt_auth_not_before', $not_before, $issued_at );
@@ -213,7 +214,7 @@ class Auth {
 	 * @return boolean
 	 */
 	public function is_error_response( $response ) {
-		if ( is_array( $response->data ) ) {
+		if ( ! empty( $response ) && property_exists( $response, 'data' ) && is_array( $response->data ) ) {
 			if ( ! isset( $response->data['success'] ) || ! $response->data['success'] ) {
 				return true;
 			}
