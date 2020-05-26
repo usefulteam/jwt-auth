@@ -392,8 +392,11 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 3. Other error responses
 
 == Changelog ==
+= 0.1.3 =
+- Add `jwt_auth_do_custom_auth` filter so that developer can use custom authentication like OTP authentication or any other.
+
 = 0.1.2 =
-- Working version
+- Working version.
 
 == Upgrade Notice ==
 Just update the plugin

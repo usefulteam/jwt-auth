@@ -78,24 +78,24 @@ class Auth {
 	}
 
 	/**
-	 * Authenticate user (either via wp_authenticate or otp).
+	 * Authenticate user either via wp_authenticate or custom auth (e.g: OTP).
 	 *
 	 * @param string $username The username.
 	 * @param string $password The password.
-	 * @param string $otp The OTP (if any).
+	 * @param mixed  $custom_auth The custom auth data (if any).
 	 *
 	 * @return WP_User|WP_Error $user Returns WP_User object if success, or WP_Error if failed.
 	 */
-	public function authenticate_user( $username, $password, $otp = '' ) {
-		// If using OTP authentication.
-		if ( $otp ) {
-			$otp_error = new WP_Error( 'jwt_auth_otp_failed', __( 'Failed to verify OTP.', 'jwt-auth' ) );
+	public function authenticate_user( $username, $password, $custom_auth = '' ) {
+		// If using custom authentication.
+		if ( $custom_auth ) {
+			$custom_auth_error = new WP_Error( 'jwt_auth_custom_auth_failed', __( 'Custom authentication failed.', 'jwt-auth' ) );
 
 			/**
-			 * Do your own OTP authentication and return the result through this filter.
+			 * Do your own custom authentication and return the result through this filter.
 			 * It should return either WP_User or WP_Error.
 			 */
-			$user = apply_filters( 'jwt_auth_do_otp', null, $username, $password, $otp );
+			$user = apply_filters( 'jwt_auth_do_custom_auth', $custom_auth_error, $username, $password, $custom_auth );
 		} else {
 			$user = wp_authenticate( $username, $password );
 		}
@@ -112,9 +112,9 @@ class Auth {
 	public function generate_token( WP_REST_Request $request ) {
 		$secret_key = defined( 'JWT_AUTH_SECRET_KEY' ) ? JWT_AUTH_SECRET_KEY : false;
 
-		$username = $request->get_param( 'username' );
-		$password = $request->get_param( 'password' );
-		$otp      = $request->get_param( 'otp' );
+		$username    = $request->get_param( 'username' );
+		$password    = $request->get_param( 'password' );
+		$custom_auth = $request->get_param( 'custom_auth' );
 
 		// First thing, check the secret key if not exist return a error.
 		if ( ! $secret_key ) {
@@ -129,7 +129,7 @@ class Auth {
 			);
 		}
 
-		$user = $this->authenticate_user( $username, $password, $otp );
+		$user = $this->authenticate_user( $username, $password, $custom_auth );
 
 		// If the authentication is failed return error response.
 		if ( is_wp_error( $user ) ) {
