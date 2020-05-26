@@ -286,9 +286,9 @@ The **jwt_auth_iss** allows you to change the [**iss**](https://tools.ietf.org/h
 
 Default Value:
 
-```
+`
 get_bloginfo( 'url' )
-```
+`
 
 = jwt_auth_not_before =
 
@@ -479,6 +479,20 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 3. Other error responses
 
 == Changelog ==
+= 1.1.0 =
+- Support WooCommerce by ignoring `/wp-json/wc/` and `/wp-json/wc-auth/` namespace. You can use `jwt_auth_whitelist` filter if you want to whiteist other endpoints. See **Whitelisting Endpoints** section in the description tab.
+
+= 1.0.0 =
+- **Filter Change**: Rename `jwt_auth_token_payload` filter to `jwt_auth_payload`
+- **Filter Change**: Rename `jwt_auth_token_response` filter to `jwt_auth_valid_credential_response`
+- **Critical Bugfix**: The auth only restricted wp-json/jwt-auth/v1/* endpoints. So endpoints under other namespace were not restricted. With this change, other endpoints are restricted now. If you need to whitelist some endpoints, please read about **Whitelisting Endpoints** section in the description tab.
+- New Filter: `jwt_auth_valid_token_response`
+- New Filter: Make possible to whitelist specific endpoints via `jwt_auth_whitelist` filter.
+- New Filter: Make possible to change the token issuer by providing `jwt_auth_iss` filter.
+- New Filter: Make possible to change the supported algorithm by providing `jwt_auth_alg` filter.
+- New Filter: Make possible to change the valid token response by providing `jwt_auth_valid_token_response` filter.
+- Add support for site with disabled permalink.
+
 = 0.1.3 =
 - Add `jwt_auth_do_custom_auth` filter so that developer can use custom authentication like OTP authentication or any other.
 

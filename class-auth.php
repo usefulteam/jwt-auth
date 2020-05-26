@@ -436,9 +436,29 @@ class Auth {
 			if ( 'jwt_auth_no_auth_header' === $payload->data['code'] ||
 				'jwt_auth_bad_auth_header' === $payload->data['code']
 			) {
-				if ( '/' . $this->rest_api_slug . '/jwt-auth/v1/token' !== $_SERVER['REQUEST_URI'] ) {
-					if ( ! $this->is_whitelisted() ) {
-						$this->jwt_error = $payload;
+				$request_uri = $_SERVER['REQUEST_URI'];
+
+				if ( '/' . $this->rest_api_slug . '/jwt-auth/v1/token' !== $request_uri ) {
+					$ignore_endpoints = array(
+						// WooCommerce namespace.
+						'/' . $this->rest_api_slug . '/wc/',
+						'/' . $this->rest_api_slug . '/wc-auth/',
+					);
+
+					$is_ignored = false;
+
+					foreach ( $ignore_endpoints as $endpoint ) {
+						if ( false !== stripos( $request_uri, $endpoint ) ) {
+							$is_ignored = true;
+
+							break;
+						}
+					}
+
+					if ( ! $is_ignored ) {
+						if ( ! $this->is_whitelisted() ) {
+							$this->jwt_error = $payload;
+						}
 					}
 				}
 			} else {
