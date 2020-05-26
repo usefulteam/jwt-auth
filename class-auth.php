@@ -365,9 +365,10 @@ class Auth {
 
 		// If $payload is an error response, then return the default $user_id.
 		if ( $this->is_error_response( $payload ) ) {
-			if ( 'jwt_auth_no_auth_header' === $payload->data['code'] ) {
+			if ( 'jwt_auth_no_auth_header' === $payload->data['code'] ||
+				'jwt_auth_bad_auth_header' === $payload->data['code']
+			) {
 				if (
-					false !== stripos( $_SERVER['REQUEST_URI'], '/wp-json/jwt-auth/' ) &&
 					'/wp-json/jwt-auth/v1/token' !== $_SERVER['REQUEST_URI']
 				) {
 					$this->jwt_error = $payload;
@@ -394,12 +395,12 @@ class Auth {
 	 * @return mixed $result
 	 */
 	public function rest_pre_dispatch( $result, WP_REST_Server $server, WP_REST_Request $request ) {
-		if ( empty( $result ) ) {
-			return $result;
-		}
-
 		if ( $this->is_error_response( $this->jwt_error ) ) {
 			return $this->jwt_error;
+		}
+
+		if ( empty( $result ) ) {
+			return $result;
 		}
 
 		return $result;
