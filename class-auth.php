@@ -160,8 +160,10 @@ class Auth {
 	 */
 	public function generate_token( $user, $return_raw = true ) {
 		$issued_at  = time();
-		$not_before = apply_filters( 'jwt_auth_not_before', $issued_at );
-		$expire     = apply_filters( 'jwt_auth_expire', $issued_at + ( DAY_IN_SECONDS * 7 ) );
+		$not_before = $issued_at;
+		$not_before = apply_filters( 'jwt_auth_not_before', $not_before, $issued_at );
+		$expire     = $issued_at + ( DAY_IN_SECONDS * 7 );
+		$expire     = apply_filters( 'jwt_auth_expire', $expire, $issued_at );
 
 		$payload = array(
 			'iss'  => get_bloginfo( 'url' ),
