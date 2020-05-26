@@ -178,8 +178,10 @@ class Auth {
 			),
 		);
 
+		$alg = $this->get_alg();
+
 		// Let the user modify the token data before the sign.
-		$token = JWT::encode( apply_filters( 'jwt_auth_token_payload', $payload, $user ), $secret_key );
+		$token = JWT::encode( apply_filters( 'jwt_auth_token_payload', $payload, $user ), $secret_key, $alg );
 
 		// If return as raw token string.
 		if ( $return_raw ) {
@@ -214,6 +216,17 @@ class Auth {
 	 */
 	public function get_iss() {
 		return apply_filters( 'jwt_auth_iss', get_bloginfo( 'url' ) );
+	}
+
+	/**
+	 * Get the supported jwt auth signing algorithm.
+	 *
+	 * @see https://tools.ietf.org/html/draft-ietf-jose-json-web-algorithms-40
+	 *
+	 * @return string $alg
+	 */
+	public function get_alg() {
+		return apply_filters( 'jwt_auth_alg', 'HS256' );
 	}
 
 	/**
@@ -299,7 +312,8 @@ class Auth {
 
 		// Try to decode the token.
 		try {
-			$payload = JWT::decode( $token, $secret_key, array( 'HS256' ) );
+			$alg     = $this->get_alg();
+			$payload = JWT::decode( $token, $secret_key, array( $alg ) );
 
 			// The Token is decoded now validate the iss.
 			if ( $payload->iss !== $this->get_iss() ) {
@@ -315,7 +329,7 @@ class Auth {
 				);
 			}
 
-			// So far so good, validate the user id in the token.
+			// Check the user id existence in the token.
 			if ( ! isset( $payload->data->user->id ) ) {
 				// No user id in the token, abort!!
 				return new WP_REST_Response(
@@ -324,6 +338,22 @@ class Auth {
 						'statusCode' => 403,
 						'code'       => 'jwt_auth_bad_request',
 						'message'    => __( 'User ID not found in the token.', 'jwt-auth' ),
+						'data'       => array(),
+					)
+				);
+			}
+
+			// So far so good, check if the given user id exists in db.
+			$user = get_user_by( 'id', $payload->data->user->id );
+
+			if ( ! $user ) {
+				// No user id in the token, abort!!
+				return new WP_REST_Response(
+					array(
+						'success'    => false,
+						'statusCode' => 403,
+						'code'       => 'jwt_auth_user_not_found',
+						'message'    => __( "User doesn't exist", 'jwt-auth' ),
 						'data'       => array(),
 					)
 				);

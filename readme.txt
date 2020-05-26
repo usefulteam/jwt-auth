@@ -230,6 +230,30 @@ If the token is invalid an error will be returned. Here are some samples of erro
 }
 `
 
+= Bad Request =
+
+`
+{
+	"success": false,
+	"statusCode": 403,
+	"code": "jwt_auth_bad_request",
+	"message": "User ID not found in the token.",
+	"data": []
+}
+`
+
+= User Not Found =
+
+`
+{
+	"success": false,
+	"statusCode": 403,
+	"code": "jwt_auth_user_not_found",
+	"message": "User doesn't exist",
+	"data": []
+}
+`
+
 = Expired Token =
 
 `
@@ -285,6 +309,16 @@ Default Value:
 
 `
 time() + (DAY_IN_SECONDS * 7)
+`
+
+= jwt_auth_alg =
+
+The `jwt_auth_alg` allows you to change the supported signing [algorithm](https://tools.ietf.org/html/draft-ietf-jose-json-web-algorithms-40) for your application.
+
+Default Value:
+
+`
+'HS256'
 `
 
 = jwt_auth_token_payload =
