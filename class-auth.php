@@ -140,7 +140,7 @@ class Auth {
 					'success'    => false,
 					'statusCode' => 403,
 					'code'       => $error_code,
-					'message'    => $user->get_error_message( $error_code ),
+					'message'    => strip_tags( $user->get_error_message( $error_code ) ),
 					'data'       => array(),
 				)
 			);
