@@ -264,9 +264,19 @@ Default Value:
 'Access-Control-Allow-Headers, Content-Type, Authorization'
 ```
 
+### jwt_auth_iss
+
+The **jwt_auth_iss** allows you to change the [**iss**](https://tools.ietf.org/html/rfc7519#section-4.1.1) value before the payload is encoded to be a token.
+
+Default Value:
+
+```
+get_bloginfo( 'url' )
+```
+
 ### jwt_auth_not_before
 
-The `jwt_auth_not_before` allows you to change the [**nbf**](https://tools.ietf.org/html/rfc7519#section-4.1.5) value before the token is created.
+The `jwt_auth_not_before` allows you to change the [**nbf**](https://tools.ietf.org/html/rfc7519#section-4.1.5) value before the payload is encoded to be a token
 
 Default Value:
 
@@ -276,7 +286,7 @@ Creation time - time()
 
 ### jwt_auth_expire
 
-The `jwt_auth_expire` allows you to change the value [**exp**](https://tools.ietf.org/html/rfc7519#section-4.1.4) before the token is created.
+The `jwt_auth_expire` allows you to change the [**exp**](https://tools.ietf.org/html/rfc7519#section-4.1.4) value before the payload is encoded to be a token
 
 Default Value:
 
@@ -286,7 +296,7 @@ time() + (DAY_IN_SECONDS * 7)
 
 ### jwt_auth_token_payload
 
-The `jwt_auth_token_payload` allows you to modify all the token data before being encoded and signed.
+The `jwt_auth_token_payload` allows you to modify all the payload / token data before being encoded and signed.
 
 Default value:
 

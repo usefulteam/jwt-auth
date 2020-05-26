@@ -167,7 +167,7 @@ class Auth {
 		$expire     = apply_filters( 'jwt_auth_expire', $expire, $issued_at );
 
 		$payload = array(
-			'iss'  => get_bloginfo( 'url' ),
+			'iss'  => $this->get_iss(),
 			'iat'  => $issued_at,
 			'nbf'  => $not_before,
 			'exp'  => $expire,
@@ -205,6 +205,15 @@ class Auth {
 
 		// Let the user modify the data before send it back.
 		return apply_filters( 'jwt_auth_token_response', $response, $user );
+	}
+
+	/**
+	 * Get the token issuer.
+	 *
+	 * @return string The token issuer (iss).
+	 */
+	public function get_iss() {
+		return apply_filters( 'jwt_auth_iss', get_bloginfo( 'url' ) );
 	}
 
 	/**
@@ -293,7 +302,7 @@ class Auth {
 			$payload = JWT::decode( $token, $secret_key, array( 'HS256' ) );
 
 			// The Token is decoded now validate the iss.
-			if ( $payload->iss !== get_bloginfo( 'url' ) ) {
+			if ( $payload->iss !== $this->get_iss() ) {
 				// The iss do not match, return error.
 				return new WP_REST_Response(
 					array(
