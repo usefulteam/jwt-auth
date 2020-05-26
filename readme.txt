@@ -141,6 +141,21 @@ The **jwt-auth** will intercept every call to the server and will look for the a
 
 If the token is valid, the API call flow will continue as always.
 
+## Whitelisting Endpoints
+
+Every call to the server (except the token creation) will be intercepted. However, you might need to whitelist some endpoints. You can use `jwt_auth_whitelist` filter to do it. E.g:
+
+`
+add_filter( 'jwt_auth_whitelist', function ( $endpoints ) {
+	return array(
+		'/wp-json/custom/v1/webhook/*',
+		'/wp-json/custom/v1/otp/*',
+		'/wp-json/custom/v1/account/check',
+		'/wp-json/custom/v1/register',
+	);
+} );
+`
+
 ## Validating Token
 
 You likely **don't need** to validate the token your self. The plugin handle it for you like explained above.
