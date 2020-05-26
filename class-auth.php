@@ -50,7 +50,7 @@ class Auth {
 			'token',
 			array(
 				'methods'  => 'POST',
-				'callback' => array( $this, 'generate_token' ),
+				'callback' => array( $this, 'get_token' ),
 			)
 		);
 
@@ -104,12 +104,12 @@ class Auth {
 	}
 
 	/**
-	 * Generate token.
+	 * Get token by sending POST request to jwt-auth/v1/token.
 	 *
 	 * @param WP_REST_Request $request The request.
 	 * @return WP_REST_Response The response.
 	 */
-	public function generate_token( WP_REST_Request $request ) {
+	public function get_token( WP_REST_Request $request ) {
 		$secret_key = defined( 'JWT_AUTH_SECRET_KEY' ) ? JWT_AUTH_SECRET_KEY : false;
 
 		$username    = $request->get_param( 'username' );
@@ -147,9 +147,21 @@ class Auth {
 		}
 
 		// Valid credentials, the user exists, let's generate the token.
+		return $this->generate_token( $user, false );
+	}
+
+	/**
+	 * Generate token
+	 *
+	 * @param WP_User $user The WP_User object.
+	 * @param bool    $return_raw Whether or not to return as raw token string.
+	 *
+	 * @return WP_REST_Response|string Return as raw token string or as a formatted WP_REST_Response.
+	 */
+	public function generate_token( $user, $return_raw = true ) {
 		$issued_at  = time();
-		$not_before = apply_filters( 'jwt_auth_not_before', $issued_at, $issued_at );
-		$expire     = apply_filters( 'jwt_auth_expire', $issued_at + ( DAY_IN_SECONDS * 7 ), $issued_at );
+		$not_before = apply_filters( 'jwt_auth_not_before', $issued_at );
+		$expire     = apply_filters( 'jwt_auth_expire', $issued_at + ( DAY_IN_SECONDS * 7 ) );
 
 		$payload = array(
 			'iss'  => get_bloginfo( 'url' ),
@@ -165,6 +177,11 @@ class Auth {
 
 		// Let the user modify the token data before the sign.
 		$token = JWT::encode( apply_filters( 'jwt_auth_token_payload', $payload, $user ), $secret_key );
+
+		// If return as raw token string.
+		if ( $return_raw ) {
+			return $token;
+		}
 
 		// The token is signed, now create object with basic info of the user.
 		$response = array(
