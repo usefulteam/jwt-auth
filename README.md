@@ -131,8 +131,9 @@ It will validates the user credentials, and returns success response including a
 ```
 
 Once you get the token, you must store it somewhere in your application. It can be:
-- using **cookie** 
-- or using **localstorage** 
+
+- using **cookie**
+- or using **localstorage**
 - or using a wrapper like [localForage](https://localforage.github.io/localForage/) or [PouchDB](https://pouchdb.com/)
 - or using local database like SQLite or [Hive](https://docs.hivedb.dev/#/)
 - or your choice based on app you develop ;)
@@ -285,7 +286,7 @@ The `jwt_auth_cors_allow_headers` allows you to modify the available headers whe
 Default Value:
 
 ```
-'Access-Control-Allow-Headers, Content-Type, Authorization'
+'X-Requested-With, Content-Type, Accept, Origin, Authorization'
 ```
 
 ### jwt_auth_iss
@@ -328,9 +329,9 @@ Default Value:
 'HS256'
 ```
 
-### jwt_auth_token_payload
+### jwt_auth_payload
 
-The `jwt_auth_token_payload` allows you to modify all the payload / token data before being encoded and signed.
+The `jwt_auth_payload` allows you to modify all the payload / token data before being encoded and signed.
 
 Default value:
 
@@ -349,9 +350,9 @@ $token = array(
 );
 ```
 
-### jwt_auth_token_response
+### jwt_auth_valid_credential_response
 
-The `jwt_auth_token_response` allows you to modify the valid response before being dispatched to the client.
+The `jwt_auth_valid_credential_response` allows you to modify the valid credential response when generating a token.
 
 Default value:
 
@@ -374,24 +375,58 @@ $response = array(
 );
 ```
 
+### jwt_auth_valid_token_response
+
+The **jwt_auth_valid_token_response** allows you to modify the valid token response when validating a token.
+
+Default value:
+
+```php
+<?php
+$response = new WP_REST_Response(
+	array(
+		'success'    => true,
+		'statusCode' => 200,
+		'code'       => 'jwt_auth_valid_token',
+		'message'    => __( 'Token is valid', 'jwt-auth' ),
+		'data'       => array(),
+	)
+);
+```
+
+Usage example:
+
+```php
+add_filter('jwt_auth_valid_token_response', function ($response, $user, $token, $payload) {
+	// Modify the response here.
+	return $response;
+}, 10, 4);
+```
+
 ## Credits
+
 - [PHP-JWT from firebase](https://github.com/firebase/php-jwt)
 - [JWT Authentication for WP REST API](https://wordpress.org/plugins/jwt-authentication-for-wp-rest-api/)
 
 ## License
+
 [GPL-3.0 License](https://oss.ninja/gpl-3.0?organization=Useful%20Team&project=WordPress%20JWT%20Auth)
 
 ## Keep This Plugin Alive & Maintained
+
 You can help me to keep this plugin alive and continue to maintain it by:
+
 - Giving **5 Stars** [review here](https://wordpress.org/plugins/jwt-auth/)
 - [Donate Now](#donate)
 
 ## Donate
+
 - If you use this plugin to help you in your work,
 - Or if this plugin benefit you, resulting money for you
 - Or if your project depends on this plugin, and you want it to keep alive and maintained
 
 Then **let's be fair** and feel free to donate me via:
+
 - [PayPal](https://www.paypal.me/bagusjavas)
 - [Patreon](https://www.patreon.com/bagus)
 

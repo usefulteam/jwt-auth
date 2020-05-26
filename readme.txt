@@ -277,7 +277,7 @@ The `jwt_auth_cors_allow_headers` allows you to modify the available headers whe
 Default Value:
 
 `
-'Access-Control-Allow-Headers, Content-Type, Authorization'
+'X-Requested-With, Content-Type, Accept, Origin, Authorization'
 `
 
 = jwt_auth_iss =
@@ -321,9 +321,9 @@ Default Value:
 'HS256'
 `
 
-= jwt_auth_token_payload =
+= jwt_auth_payload =
 
-The `jwt_auth_token_payload` allows you to modify all the payload / token data before being encoded and signed.
+The `jwt_auth_payload` allows you to modify all the payload / token data before being encoded and signed.
 
 Default value:
 
@@ -342,9 +342,9 @@ $token = array(
 );
 `
 
-= jwt_auth_token_response =
+= jwt_auth_valid_credential_response =
 
-The `jwt_auth_token_response` allows you to modify the valid response before being dispatched to the client.
+The `jwt_auth_valid_credential_response` allows you to modify the valid credential response when generating a token.
 
 Default value:
 
@@ -365,6 +365,34 @@ $response = array(
         'displayName' => $user->display_name,
     ),
 );
+`
+
+### jwt_auth_valid_token_response
+
+The **jwt_auth_valid_token_response** allows you to modify the valid token response when validating a token.
+
+Default value:
+
+`
+<?php
+$response = new WP_REST_Response(
+	array(
+		'success'    => true,
+		'statusCode' => 200,
+		'code'       => 'jwt_auth_valid_token',
+		'message'    => __( 'Token is valid', 'jwt-auth' ),
+		'data'       => array(),
+	)
+);
+`
+
+Usage example:
+
+`
+add_filter('jwt_auth_valid_token_response', function ($response, $user, $token, $payload) {
+	// Modify the response here.
+	return $response;
+}, 10, 4);
 `
 
 ## Credits

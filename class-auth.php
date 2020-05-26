@@ -188,7 +188,7 @@ class Auth {
 		$alg = $this->get_alg();
 
 		// Let the user modify the token data before the sign.
-		$token = JWT::encode( apply_filters( 'jwt_auth_token_payload', $payload, $user ), $secret_key, $alg );
+		$token = JWT::encode( apply_filters( 'jwt_auth_payload', $payload, $user ), $secret_key, $alg );
 
 		// If return as raw token string.
 		if ( $return_raw ) {
@@ -213,7 +213,7 @@ class Auth {
 		);
 
 		// Let the user modify the data before send it back.
-		return apply_filters( 'jwt_auth_token_response', $response, $user );
+		return apply_filters( 'jwt_auth_valid_credential_response', $response, $user );
 	}
 
 	/**
@@ -371,8 +371,8 @@ class Auth {
 				return $payload;
 			}
 
-			// Otherwise, then return success response.
-			return new WP_REST_Response(
+			// Otherwise, return success response.
+			$response = new WP_REST_Response(
 				array(
 					'success'    => true,
 					'statusCode' => 200,
@@ -381,6 +381,8 @@ class Auth {
 					'data'       => array(),
 				)
 			);
+
+			return apply_filters( 'jwt_auth_valid_token_response', $response, $user, $token, $payload );
 		} catch ( Exception $e ) {
 			// Something is wrong when trying to decode the token, return error response.
 			return new WP_REST_Response(
