@@ -35,6 +35,13 @@ class Auth {
 	private $jwt_error = null;
 
 	/**
+	 * The REST API slug.
+	 *
+	 * @var string
+	 */
+	private $rest_api_slug = 'wp-json';
+
+	/**
 	 * Setup action & filter hooks.
 	 */
 	public function __construct() {
@@ -402,9 +409,9 @@ class Auth {
 		 *
 		 * @since 1.2.3
 		 */
-		$rest_api_slug = rest_get_url_prefix();
+		$this->rest_api_slug = get_option( 'permalink_structure' ) ? rest_get_url_prefix() : '?rest_route=/';
 
-		$valid_api_uri = strpos( $_SERVER['REQUEST_URI'], $rest_api_slug );
+		$valid_api_uri = strpos( $_SERVER['REQUEST_URI'], $this->rest_api_slug );
 
 		if ( ! $valid_api_uri ) {
 			return $user_id;
@@ -427,7 +434,7 @@ class Auth {
 			if ( 'jwt_auth_no_auth_header' === $payload->data['code'] ||
 				'jwt_auth_bad_auth_header' === $payload->data['code']
 			) {
-				if ( '/wp-json/jwt-auth/v1/token' !== $_SERVER['REQUEST_URI'] ) {
+				if ( '/' . $this->rest_api_slug . '/jwt-auth/v1/token' !== $_SERVER['REQUEST_URI'] ) {
 					if ( ! $this->is_whitelisted() ) {
 						$this->jwt_error = $payload;
 					}
@@ -457,8 +464,8 @@ class Auth {
 
 		$request_uri = $_SERVER['REQUEST_URI'];
 
-		// Only use string before "?" sign.
-		if ( false !== stripos( $request_uri, '?' ) ) {
+		// Only use string before "?" sign if permalink is enabled.
+		if ( get_option( 'permalink_structure' ) && false !== stripos( $request_uri, '?' ) ) {
 			$split       = explode( '?', $request_uri );
 			$request_uri = $split[0];
 		}
