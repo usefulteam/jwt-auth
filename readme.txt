@@ -463,6 +463,10 @@ define('JWT_AUTH_CORS_ENABLE', true);
 Finally activate the plugin within the plugin dashboard.
 
 == Frequently Asked Questions ==
+= Now almost all REST routes are intercepted. How to exclude some routes/ endpoints? =
+
+There's `jwt_auth_whitelist` that you can use to whitelist specific endpoints. For more information, pease read **Whitelisting Endpoints** section in the Description tab.
+
 = Do you have GitHub repository for this plugin? =
 
 You can visit the GitHub repository [here](https://github.com/usefulteam/jwt-auth/)
