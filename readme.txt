@@ -371,7 +371,7 @@ time() + (DAY_IN_SECONDS * 7)
 
 Usage example:
 
-```php
+`
 /**
  * Change the token's expire value.
  *
