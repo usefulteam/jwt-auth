@@ -154,7 +154,7 @@ If the token is valid, the API call flow will continue as always.
 
 ## Whitelisting Endpoints
 
-Every call to the server (except the token creation) will be intercepted. However, you might need to whitelist some endpoints. You can use `jwt_auth_whitelist` filter to do it. E.g:
+Every call to the server (except the token creation some default whitelist) will be intercepted. However, you might need to whitelist some endpoints. You can use `jwt_auth_whitelist` filter to do it. E.g:
 
 ```php
 add_filter( 'jwt_auth_whitelist', function ( $endpoints ) {
@@ -275,9 +275,9 @@ If the token is invalid an error will be returned. Here are some samples of erro
 }
 ```
 
-## Available Hooks
+## Available Filter Hooks
 
-JWT Auth is developer friendly and has some filters available to override the default settings.
+**JWT Auth** is developer friendly and has some filters available to override the default settings.
 
 ### jwt_auth_cors_allow_headers
 
@@ -287,6 +287,24 @@ Default Value:
 
 ```
 'X-Requested-With, Content-Type, Accept, Origin, Authorization'
+```
+
+Usage example:
+
+```php
+/**
+ * Change the allowed CORS headers.
+ *
+ * @param string $headers The allowed headers.
+ * @return string The allowed headers.
+ */
+add_filter(
+	'jwt_auth_cors_allow_headers',
+	function ( $headers ) {
+		// Modify the headers here.
+		return $headers;
+	}
+);
 ```
 
 ### jwt_auth_iss
@@ -299,6 +317,24 @@ Default Value:
 get_bloginfo( 'url' )
 ```
 
+Usage example:
+
+```php
+/**
+ * Change the token issuer.
+ *
+ * @param string $iss The token issuer.
+ * @return string The token issuer.
+ */
+add_filter(
+	'jwt_auth_iss',
+	function ( $iss ) {
+		// Modify the "iss" here.
+		return $iss;
+	}
+);
+```
+
 ### jwt_auth_not_before
 
 The `jwt_auth_not_before` allows you to change the [**nbf**](https://tools.ietf.org/html/rfc7519#section-4.1.5) value before the payload is encoded to be a token
@@ -306,7 +342,30 @@ The `jwt_auth_not_before` allows you to change the [**nbf**](https://tools.ietf.
 Default Value:
 
 ```
-Creation time - time()
+// Creation time.
+time()
+```
+
+Usage example:
+
+```php
+/**
+ * Change the token's nbf value.
+ *
+ * @param int $not_before The default "nbf" value in timestamp.
+ * @param int $issued_at The "iat" value in timestamp.
+ *
+ * @return int The "nbf" value.
+ */
+add_filter(
+	'jwt_auth_not_before',
+	function ( $not_before, $issued_at ) {
+		// Modify the "not_before" here.
+		return $not_before;
+	},
+	10,
+	2
+);
 ```
 
 ### jwt_auth_expire
@@ -319,6 +378,28 @@ Default Value:
 time() + (DAY_IN_SECONDS * 7)
 ```
 
+Usage example:
+
+```php
+/**
+ * Change the token's expire value.
+ *
+ * @param int $expire The default "exp" value in timestamp.
+ * @param int $issued_at The "iat" value in timestamp.
+ *
+ * @return int The "nbf" value.
+ */
+add_filter(
+	'jwt_auth_expire',
+	function ( $expire, $issued_at ) {
+		// Modify the "expire" here.
+		return $expire;
+	},
+	10,
+	2
+);
+```
+
 ### jwt_auth_alg
 
 The `jwt_auth_alg` allows you to change the supported signing [algorithm](https://tools.ietf.org/html/draft-ietf-jose-json-web-algorithms-40) for your application.
@@ -327,6 +408,24 @@ Default Value:
 
 ```
 'HS256'
+```
+
+Usage example:
+
+```php
+/**
+ * Change the token's signing algorithm.
+ *
+ * @param string $alg The default supported signing algorithm.
+ * @return string The supported signing algorithm.
+ */
+add_filter(
+	'jwt_auth_alg',
+	function ( $alg ) {
+		// Change the signing algorithm here.
+		return $alg;
+	}
+);
 ```
 
 ### jwt_auth_payload
@@ -347,6 +446,28 @@ $token = array(
             'id' => $user->ID,
         )
     )
+);
+```
+
+Usage example:
+
+```php
+/**
+ * Modify the payload/ token's data before being encoded & signed.
+ *
+ * @param array $payload The default payload
+ * @param WP_User $user The authenticated user.
+ * .
+ * @return array The payload/ token's data.
+ */
+add_filter(
+	'jwt_auth_payload',
+	function ( $payload, $user ) {
+		// Modify the payload here.
+		return $payload;
+	},
+	10,
+	2
 );
 ```
 
@@ -375,6 +496,28 @@ $response = array(
 );
 ```
 
+Usage example:
+
+```php
+/**
+ * Modify the response of valid credential.
+ *
+ * @param array $response The default valid credential response.
+ * @param WP_User $user The authenticated user.
+ * .
+ * @return array The valid credential response.
+ */
+add_filter(
+	'jwt_auth_valid_credential_response',
+	function ( $response, $user ) {
+		// Modify the response here.
+		return $response;
+	},
+	10,
+	2
+);
+```
+
 ### jwt_auth_valid_token_response
 
 The **jwt_auth_valid_token_response** allows you to modify the valid token response when validating a token.
@@ -397,10 +540,25 @@ $response = new WP_REST_Response(
 Usage example:
 
 ```php
-add_filter('jwt_auth_valid_token_response', function ($response, $user, $token, $payload) {
-	// Modify the response here.
-	return $response;
-}, 10, 4);
+/**
+ * Modify the response of valid token.
+ *
+ * @param array $response The default valid token response.
+ * @param WP_User $user The authenticated user.
+ * @param string $token The raw token.
+ * @param array $payload The token data.
+ * .
+ * @return array The valid token response.
+ */
+add_filter(
+	'jwt_auth_valid_token_response',
+	function ( $response, $user, $token, $payload ) {
+		// Modify the response here.
+		return $response;
+	},
+	10,
+	4
+);
 ```
 
 ## Credits
