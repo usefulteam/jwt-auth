@@ -485,6 +485,7 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 == Changelog ==
 = 1.2.0 =
 - **Critical Bugfix**: WooCommerce admin breaks. With this change, WooCommerce admin should be good.
+- New Filter: We whitelist some endpoints by default to support common plugin like WooCommerce. These default whitelisted endpoints are change-able via `jwt_auth_default_whitelist` filter.
 
 = 1.1.0 =
 - Support WooCommerce by ignoring `/wp-json/wc/` and `/wp-json/wc-auth/` namespace. You can use `jwt_auth_whitelist` filter if you want to whiteist other endpoints. See **Whitelisting Endpoints** section in the description tab.
