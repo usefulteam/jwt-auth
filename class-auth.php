@@ -30,9 +30,16 @@ class Auth {
 	/**
 	 * Store errors to display if the JWT is wrong
 	 *
-	 * @var WP_Error
+	 * @var WP_REST_Response
 	 */
 	private $jwt_error = null;
+
+	/**
+	 * Collection of translate-able messages.
+	 *
+	 * @var array
+	 */
+	private $messages = array();
 
 	/**
 	 * The REST API slug.
@@ -46,6 +53,11 @@ class Auth {
 	 */
 	public function __construct() {
 		$this->namespace = 'jwt-auth/v1';
+
+		$this->messages = array(
+			'jwt_auth_no_auth_header'  => __( 'Authorization header not found.', 'jwt-auth' ),
+			'jwt_auth_bad_auth_header' => __( 'Authorization header malformed.', 'jwt-auth' ),
+		);
 	}
 
 	/**
@@ -278,7 +290,7 @@ class Auth {
 					'success'    => false,
 					'statusCode' => 403,
 					'code'       => 'jwt_auth_no_auth_header',
-					'message'    => __( 'Authorization header not found.', 'jwt-auth' ),
+					'message'    => $this->messages['jwt_auth_no_auth_header'],
 					'data'       => array(),
 				)
 			);
@@ -296,7 +308,7 @@ class Auth {
 					'success'    => false,
 					'statusCode' => 403,
 					'code'       => 'jwt_auth_bad_auth_header',
-					'message'    => __( 'Authorization header malformed.', 'jwt-auth' ),
+					'message'    => $this->messages['jwt_auth_bad_auth_header'],
 					'data'       => array(),
 				)
 			);
@@ -439,15 +451,22 @@ class Auth {
 				$request_uri = $_SERVER['REQUEST_URI'];
 
 				if ( '/' . $this->rest_api_slug . '/jwt-auth/v1/token' !== $request_uri ) {
-					$ignore_endpoints = array(
+					// Whitelist some endpoints by default.
+					$default_whitelist = array(
 						// WooCommerce namespace.
 						'/' . $this->rest_api_slug . '/wc/',
 						'/' . $this->rest_api_slug . '/wc-auth/',
+						'/' . $this->rest_api_slug . '/wc-analytics/',
+
+						// This endpoint is used by WooCommerce analytics.
+						'/wp-json/wp/v2/users/me',
 					);
+
+					$default_whitelist = apply_filters( 'jwt_auth_default_whitelist', $default_whitelist );
 
 					$is_ignored = false;
 
-					foreach ( $ignore_endpoints as $endpoint ) {
+					foreach ( $default_whitelist as $endpoint ) {
 						if ( false !== stripos( $request_uri, $endpoint ) ) {
 							$is_ignored = true;
 
