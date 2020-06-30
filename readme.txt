@@ -638,6 +638,10 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 3. Other error responses
 
 == Changelog ==
+= 1.3.0 =
+- **Filter Change**: `jwt_auth_valid_token_response` should only filter the $response array instead of the whole `WP_REST_Response`. Please check if you use this filter :)
+- README update about `jwt_auth_whitelist` filter usage. That filter should be added directly (without hook) OR inside `plugins_loaded`. Adding it to `init` (or after that) will not work.
+
 = 1.2.0 =
 - **Critical Bugfix**: WooCommerce admin breaks. With this change, WooCommerce admin should be good.
 - New Filter: We whitelist some endpoints by default to support common plugin like WooCommerce. These default whitelisted endpoints are change-able via `jwt_auth_default_whitelist` filter.
