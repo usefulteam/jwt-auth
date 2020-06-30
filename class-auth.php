@@ -383,18 +383,18 @@ class Auth {
 				return $payload;
 			}
 
-			// Otherwise, return success response.
-			$response = new WP_REST_Response(
-				array(
-					'success'    => true,
-					'statusCode' => 200,
-					'code'       => 'jwt_auth_valid_token',
-					'message'    => __( 'Token is valid', 'jwt-auth' ),
-					'data'       => array(),
-				)
+			$response = array(
+				'success'    => true,
+				'statusCode' => 200,
+				'code'       => 'jwt_auth_valid_token',
+				'message'    => __( 'Token is valid', 'jwt-auth' ),
+				'data'       => array(),
 			);
 
-			return apply_filters( 'jwt_auth_valid_token_response', $response, $user, $token, $payload );
+			$response = apply_filters( 'jwt_auth_valid_token_response', $response, $user, $token, $payload );
+
+			// Otherwise, return success response.
+			return new WP_REST_Response( $response );
 		} catch ( Exception $e ) {
 			// Something is wrong when trying to decode the token, return error response.
 			return new WP_REST_Response(

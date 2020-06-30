@@ -526,14 +526,12 @@ Default value:
 
 ```php
 <?php
-$response = new WP_REST_Response(
-	array(
-		'success'    => true,
-		'statusCode' => 200,
-		'code'       => 'jwt_auth_valid_token',
-		'message'    => __( 'Token is valid', 'jwt-auth' ),
-		'data'       => array(),
-	)
+$response = array(
+	'success'    => true,
+	'statusCode' => 200,
+	'code'       => 'jwt_auth_valid_token',
+	'message'    => __( 'Token is valid', 'jwt-auth' ),
+	'data'       => array(),
 );
 ```
 
