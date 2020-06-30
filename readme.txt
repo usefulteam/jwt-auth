@@ -143,7 +143,7 @@ If the token is valid, the API call flow will continue as always.
 
 ## Whitelisting Endpoints
 
-Every call to the server (except the token creation some default whitelist) will be intercepted. However, you might need to whitelist some endpoints. You can use `jwt_auth_whitelist` filter to do it. E.g:
+Every call to the server (except the token creation some default whitelist) will be intercepted. However, you might need to whitelist some endpoints. You can use `jwt_auth_whitelist` filter to do it. Please simply add this filter directly (without hook). Or, you can add it to `plugins_loaded`. Adding this filter inside `init` (or later) will not work.
 
 `
 add_filter( 'jwt_auth_whitelist', function ( $endpoints ) {
