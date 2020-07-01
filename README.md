@@ -4,6 +4,10 @@ WordPress JWT (JSON Web Token) Authentication allows you to do REST API authenti
 
 This plugin probably is the most convenient way to do JWT Authentication in WordPress. Download it from [WordPress plugin page](https://wordpress.org/plugins/jwt-auth/).
 
+- Support & question: [WordPress support forum](https://wordpress.org/support/plugin/jwt-auth/)
+- Reporting plugin's bug: [GitHub issues tracker](https://github.com/usefulteam/jwt-auth/issues)
+- [Discord channel](https://discord.gg/SHj5GA) also available for faster response.
+
 ## Requirements
 
 ### PHP

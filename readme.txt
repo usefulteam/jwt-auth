@@ -13,9 +13,11 @@ License URI: https://oss.ninja/gpl-3.0?organization=Useful%20Team&project=WordPr
 Create JSON Web Token Authentication in WordPress.
 
 == Description ==
-WordPress JSON Web Token Authentication allows you to do REST API authentication via token. It is a simple, non-complex, and easy to use.
+WordPress JSON Web Token Authentication allows you to do REST API authentication via token. It is a simple, non-complex, and easy to use. This plugin probably is the most convenient way to do JWT Authentication in WordPress. 
 
-This plugin probably is the most convenient way to do JWT Authentication in WordPress.
+- Support & question: [WordPress support forum](https://wordpress.org/support/plugin/jwt-auth/)
+- Reporting plugin's bug: [GitHub issues tracker](https://github.com/usefulteam/jwt-auth/issues)
+- [Discord channel](https://discord.gg/SHj5GA) also available for faster response.
 
 ## Enable PHP HTTP Authorization Header
 
