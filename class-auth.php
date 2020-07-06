@@ -460,7 +460,7 @@ class Auth {
 						$rest_api_slug . '/wc-analytics/',
 
 						// WordPress default endpoints.
-						$rest_api_slug . '/wp/v2/*',
+						$rest_api_slug . '/wp/v2/',
 					);
 
 					// Well, we let you adjust this default whitelist :).
