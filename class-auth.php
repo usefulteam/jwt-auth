@@ -448,15 +448,16 @@ class Auth {
 			if ( 'jwt_auth_no_auth_header' === $payload->data['code'] ||
 				'jwt_auth_bad_auth_header' === $payload->data['code']
 			) {
-				$request_uri = $_SERVER['REQUEST_URI'];
+				$request_uri   = $_SERVER['REQUEST_URI'];
+				$rest_api_slug = home_url( '/' . $this->rest_api_slug, 'relative' );
 
-				if ( '/' . $this->rest_api_slug . '/jwt-auth/v1/token' !== $request_uri ) {
+				if ( $rest_api_slug . '/jwt-auth/v1/token' !== $request_uri ) {
 					// Whitelist some endpoints by default.
 					$default_whitelist = array(
 						// WooCommerce namespace.
-						'/' . $this->rest_api_slug . '/wc/',
-						'/' . $this->rest_api_slug . '/wc-auth/',
-						'/' . $this->rest_api_slug . '/wc-analytics/',
+						$rest_api_slug . '/wc/',
+						$rest_api_slug . '/wc-auth/',
+						$rest_api_slug . '/wc-analytics/',
 
 						// This endpoint is used by WooCommerce analytics.
 						'/wp-json/wp/v2/users/me',
