@@ -459,8 +459,8 @@ class Auth {
 						$rest_api_slug . '/wc-auth/',
 						$rest_api_slug . '/wc-analytics/',
 
-						// This endpoint is used by WooCommerce analytics.
-						'/wp-json/wp/v2/users/me',
+						// WordPress default endpoints.
+						$rest_api_slug . '/wp/v2/*',
 					);
 
 					$default_whitelist = apply_filters( 'jwt_auth_default_whitelist', $default_whitelist );
