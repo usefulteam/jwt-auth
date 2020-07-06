@@ -463,6 +463,7 @@ class Auth {
 						$rest_api_slug . '/wp/v2/*',
 					);
 
+					// Well, we let you adjust this default whitelist :).
 					$default_whitelist = apply_filters( 'jwt_auth_default_whitelist', $default_whitelist );
 
 					$is_ignored = false;
