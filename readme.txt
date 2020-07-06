@@ -640,6 +640,9 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 3. Other error responses
 
 == Changelog ==
+= 1.4.1 =
+- Bugfix: the previous `/wp-json/wp/v2/*` whitelisting didn't work. It should be `/wp-json/wp/v2/` (without the star char).
+
 = 1.4.0 =
 - Whitelist `/wp-json/wp/v2/*` by default. This will prevent the plugin from breaking the default WordPress administration (gutenberg, etc).
 - Bugfix: fix the problem with WordPress subdir installation. [See issue](https://github.com/usefulteam/jwt-auth/issues/2).
