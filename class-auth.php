@@ -452,14 +452,14 @@ class Auth {
 				$rest_api_slug = home_url( '/' . $this->rest_api_slug, 'relative' );
 
 				if ( $rest_api_slug . '/jwt-auth/v1/token' !== $request_uri ) {
-					// Whitelist some endpoints by default.
+					// Whitelist some endpoints by default (without trailing * char).
 					$default_whitelist = array(
 						// WooCommerce namespace.
 						$rest_api_slug . '/wc/',
 						$rest_api_slug . '/wc-auth/',
 						$rest_api_slug . '/wc-analytics/',
 
-						// WordPress default endpoints.
+						// WordPress namespace.
 						$rest_api_slug . '/wp/v2/',
 					);
 
