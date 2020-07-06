@@ -17,7 +17,7 @@ WordPress JSON Web Token Authentication allows you to do REST API authentication
 
 - Support & question: [WordPress support forum](https://wordpress.org/support/plugin/jwt-auth/)
 - Reporting plugin's bug: [GitHub issues tracker](https://github.com/usefulteam/jwt-auth/issues)
-- [Discord channel](https://discord.gg/SHj5GA) also available for faster response.
+- [Discord channel](https://discord.gg/DgECpEg) also available for faster response.
 
 ## Enable PHP HTTP Authorization Header
 
