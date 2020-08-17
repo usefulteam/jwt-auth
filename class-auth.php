@@ -70,6 +70,7 @@ class Auth {
 			array(
 				'methods'  => 'POST',
 				'callback' => array( $this, 'get_token' ),
+				'permission_callback' => '__return_true',
 			)
 		);
 
@@ -79,6 +80,7 @@ class Auth {
 			array(
 				'methods'  => 'POST',
 				'callback' => array( $this, 'validate_token' ),
+				'permission_callback' => '__return_true',
 			)
 		);
 	}
