@@ -4,7 +4,7 @@ Contributors: contactjavas
 Donate link: https://www.paypal.me/bagusjavas
 Tags: jwt, jwt-auth, token-authentication, json-web-token
 Requires at least: 5.2
-Tested up to: 5.4
+Tested up to: 5.5
 Stable tag: trunk
 Requires PHP: 7.2
 License: GPLv3
@@ -670,6 +670,9 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 3. Other error responses
 
 == Changelog ==
+= 1.4.2 =
+- Bugfix: add `permission_callback` argument since it's required in WP 5.5
+
 = 1.4.1 =
 - Bugfix: the previous `/wp-json/wp/v2/*` whitelisting didn't work. It should be `/wp-json/wp/v2/` (without the star char).
 

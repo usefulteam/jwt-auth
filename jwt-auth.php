@@ -3,7 +3,7 @@
  * Plugin Name: JWT Auth
  * Plugin URI:  https://github.com/usefulteam/jwt-auth
  * Description: WordPress JWT Authentication.
- * Version:     1.4.1
+ * Version:     1.4.2
  * Author:      Useful Team
  * Author URI:  https://usefulteam.com
  * License:     GPL-3.0
@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || die( "Can't access directly" );
 // Helper constants.
 define( 'JWT_AUTH_PLUGIN_DIR', rtrim( plugin_dir_path( __FILE__ ), '/' ) );
 define( 'JWT_AUTH_PLUGIN_URL', rtrim( plugin_dir_url( __FILE__ ), '/' ) );
-define( 'JWT_AUTH_PLUGIN_VERSION', '1.4.1' );
+define( 'JWT_AUTH_PLUGIN_VERSION', '1.4.2' );
 
 // Require composer.
 require __DIR__ . '/vendor/autoload.php';
