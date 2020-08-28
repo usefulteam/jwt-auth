@@ -102,6 +102,8 @@ To generate token, submit a POST request to this endpoint. With `username` and `
 
 It will validates the user credentials, and returns success response including a token if the authentication is correct or returns an error response if the authentication is failed.
 
+You can use the optional parameter `device` with the device identifier to let user manage the device access in your profile. If this parameter is empty, it is ignored.
+
 #### Sample of success response when trying to generate token:
 
 ```json
@@ -309,6 +311,18 @@ If the token is invalid an error will be returned. Here are some samples of erro
 }
 ```
 
+**Obsolete Token**
+
+```json
+{
+	"success": false,
+	"statusCode": 403,
+	"code": "jwt_auth_obsolete_token",
+	"message": "Token is obsolete",
+	"data": []
+}
+```
+
 ## Available Filter Hooks
 
 **JWT Auth** is developer friendly and has some filters available to override the default settings.
@@ -340,6 +354,39 @@ add_filter(
 	}
 );
 ```
+
+
+### jwt_auth_authorization_header
+
+The **jwt_auth_authorization_header** allows you to modify the Authorization header key used to validating a token. Useful when the server already uses the 'Authorization' key for another auth method.
+
+Default value:
+
+```
+'HTTP_AUTHORIZATION'
+```
+
+Usage example:
+
+```php
+/**
+ * Modify the response of Authorization header key.
+ *
+ * @param string $header The Authorization header key.
+ * .
+ * @return string The Authorization header key.
+ */
+add_filter(
+	'jwt_auth_authorization_header',
+	function ( $header ) {
+		// Modify the response here.
+		return $header;
+	},
+	10,
+	1
+);
+```
+
 
 ### jwt_auth_iss
 
@@ -593,10 +640,47 @@ add_filter(
 );
 ```
 
+
+### jwt_auth_valid_token_extra
+
+The **jwt_auth_valid_token_extra** allows you to add extra criterias to validate a token. If empty, has no problem to proceed. Use empty value to bypass filter, any value will block the token access.
+
+Default value:
+
+````
+''
+```
+
+Usage example:
+
+```php
+/**
+ * Modify the validation of token. No-empty values block token validation.
+ *
+ * @param array $response An empty value ''.
+ * @param WP_User $user The authenticated user.
+ * @param string $token The raw token.
+ * @param array $payload The token data.
+ * .
+ * @return array The valid token response.
+ */
+add_filter(
+	'jwt_auth_valid_token_extra',
+	function ( $response, $user, $token, $payload ) {
+		// Modify the response here.
+		return $response;
+	},
+	10,
+	4
+);
+```
+
+
 ## Credits
 
 - [PHP-JWT from firebase](https://github.com/firebase/php-jwt)
 - [JWT Authentication for WP REST API](https://wordpress.org/plugins/jwt-authentication-for-wp-rest-api/)
+- [Devices by pesseba](https://github.com/pesseba)
 
 ## License
 

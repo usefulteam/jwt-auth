@@ -27,5 +27,6 @@ require __DIR__ . '/vendor/autoload.php';
 // Require classes.
 require __DIR__ . '/class-auth.php';
 require __DIR__ . '/class-setup.php';
+require __DIR__ . '/class-devices.php';
 
 new JWTAuth\Setup();
