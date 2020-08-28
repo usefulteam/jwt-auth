@@ -647,8 +647,8 @@ The **jwt_auth_valid_token_extra** allows you to add extra criterias to validate
 
 Default value:
 
-````
-(empty)
+```
+''
 ```
 
 Usage example:
