@@ -18,6 +18,7 @@ class Setup {
 		add_action( 'init', array( $this, 'setup_text_domain' ) );
 
 		$auth = new Auth();
+		$devices = new Devices();
 
 		add_action( 'rest_api_init', array( $auth, 'register_rest_routes' ) );
 		add_filter( 'rest_api_init', array( $auth, 'add_cors_support' ) );
