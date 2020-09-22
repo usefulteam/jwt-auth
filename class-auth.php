@@ -272,11 +272,11 @@ class Auth {
 	 * Main validation function, this function try to get the Autentication
 	 * headers and decoded.
 	 *
-	 * @param bool $output Whether to only return the payload or not.
+	 * @param bool $return_response Either to return full WP_REST_Response or to return the payload only.
 	 *
 	 * @return WP_REST_Response | Array Returns WP_REST_Response or token's $payload.
 	 */
-	public function validate_token( $output = true ) {
+	public function validate_token( $return_response = true ) {
 		/**
 		 * Looking for the HTTP_AUTHORIZATION header, if not present just
 		 * return the user.
@@ -297,8 +297,7 @@ class Auth {
 					'code'       => 'jwt_auth_no_auth_header',
 					'message'    => $this->messages['jwt_auth_no_auth_header'],
 					'data'       => array(),
-				),
-				403
+				)
 			);
 		}
 
@@ -316,8 +315,7 @@ class Auth {
 					'code'       => 'jwt_auth_bad_auth_header',
 					'message'    => $this->messages['jwt_auth_bad_auth_header'],
 					'data'       => array(),
-				),
-				403
+				)
 			);
 		}
 
@@ -406,8 +404,8 @@ class Auth {
 				);
 			}
 
-			// Everything looks good return the token if $output is set to false.
-			if ( ! $output ) {
+			// Everything looks good, return the payload if $return_response is set to false.
+			if ( ! $return_response ) {
 				return $payload;
 			}
 
@@ -462,7 +460,7 @@ class Auth {
 
 		/**
 		 * If the request URI is for validate the token don't do anything,
-		 * this avoid double calls to the validate_token function.
+		 * This avoid double calls to the validate_token function.
 		 */
 		$validate_uri = strpos( $_SERVER['REQUEST_URI'], 'token/validate' );
 
@@ -585,7 +583,8 @@ class Auth {
 	 */
 	public function rest_pre_dispatch( $result, WP_REST_Server $server, WP_REST_Request $request ) {
 		if ( $this->is_error_response( $this->jwt_error ) ) {
-			return $this->jwt_error;
+			$data = $this->jwt_error->get_data();
+			return new WP_REST_Response( $data, $data['statusCode'] );
 		}
 
 		if ( empty( $result ) ) {
