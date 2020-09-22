@@ -68,8 +68,8 @@ class Auth {
 			$this->namespace,
 			'token',
 			array(
-				'methods'  => 'POST',
-				'callback' => array( $this, 'get_token' ),
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'get_token' ),
 				'permission_callback' => '__return_true',
 			)
 		);
@@ -78,8 +78,8 @@ class Auth {
 			$this->namespace,
 			'token/validate',
 			array(
-				'methods'  => 'POST',
-				'callback' => array( $this, 'validate_token' ),
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'validate_token' ),
 				'permission_callback' => '__return_true',
 			)
 		);
@@ -279,8 +279,8 @@ class Auth {
 		 * Looking for the HTTP_AUTHORIZATION header, if not present just
 		 * return the user.
 		 */
-		$headerkey = apply_filters('jwt_auth_authorization_header', 'HTTP_AUTHORIZATION');
-		$auth = isset( $_SERVER[$headerkey] ) ? $_SERVER[$headerkey] : false;
+		$headerkey = apply_filters( 'jwt_auth_authorization_header', 'HTTP_AUTHORIZATION' );
+		$auth      = isset( $_SERVER[ $headerkey ] ) ? $_SERVER[ $headerkey ] : false;
 
 		// Double check for different auth header string (server dependent).
 		if ( ! $auth ) {
@@ -381,17 +381,17 @@ class Auth {
 				);
 			}
 
-			//check extra condition if exists
-			$fail = apply_filters( 'jwt_auth_valid_token_extra', '', $user, $token, $payload );
+			// Check extra condition if exists.
+			$failed_msg = apply_filters( 'jwt_auth_valid_token_extra', '', $user, $token, $payload );
 
-			if ( !empty($fail) ) {
+			if ( ! empty( $failed_msg ) ) {
 				// No user id in the token, abort!!
 				return new WP_REST_Response(
 					array(
 						'success'    => false,
 						'statusCode' => 403,
 						'code'       => 'jwt_auth_obsolete_token',
-						'message'    => __( "Token is obsolete", 'jwt-auth' ),
+						'message'    => __( 'Token is obsolete', 'jwt-auth' ),
 						'data'       => array(),
 					)
 				);
@@ -526,10 +526,10 @@ class Auth {
 
 		$request_uri = $_SERVER['REQUEST_URI'];
 
-		$prefix = get_option( 'permalink_structure' ) ? rest_get_url_prefix() : '?rest_route=/';
-		$split  = explode($prefix, $request_uri);
-		$request_uri = '/'.$prefix. ((count($split)>1) ? $split[1] : $split[0] );
-		
+		$prefix      = get_option( 'permalink_structure' ) ? rest_get_url_prefix() : '?rest_route=/';
+		$split       = explode( $prefix, $request_uri );
+		$request_uri = '/' . $prefix . ( ( count( $split ) > 1 ) ? $split[1] : $split[0] );
+
 		// Only use string before "?" sign if permalink is enabled.
 		if ( get_option( 'permalink_structure' ) && false !== stripos( $request_uri, '?' ) ) {
 			$split       = explode( '?', $request_uri );
