@@ -382,7 +382,7 @@ class Auth {
 			}
 
 			// Check extra condition if exists.
-			$failed_msg = apply_filters( 'jwt_auth_valid_token_extra', '', $user, $token, $payload );
+			$failed_msg = apply_filters( 'jwt_auth_extra_token_check', '', $user, $token, $payload );
 
 			if ( ! empty( $failed_msg ) ) {
 				// No user id in the token, abort!!

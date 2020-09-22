@@ -641,9 +641,9 @@ add_filter(
 ```
 
 
-### jwt_auth_valid_token_extra
+### jwt_auth_extra_token_check
 
-The **jwt_auth_valid_token_extra** allows you to add extra criterias to validate a token. If empty, has no problem to proceed. Use empty value to bypass filter, any value will block the token access.
+The **jwt_auth_extra_token_check** allows you to add extra criterias to validate the token. If empty, has no problem to proceed. Use empty value to bypass the filter. Any other value will block the token access and returns response with code `jwt_auth_obsolete_token`.
 
 Default value:
 
@@ -665,7 +665,7 @@ Usage example:
  * @return array The valid token response.
  */
 add_filter(
-	'jwt_auth_valid_token_extra',
+	'jwt_auth_extra_token_check',
 	function ( $response, $user, $token, $payload ) {
 		// Modify the response here.
 		return $response;
@@ -680,7 +680,7 @@ add_filter(
 
 - [PHP-JWT from firebase](https://github.com/firebase/php-jwt)
 - [JWT Authentication for WP REST API](https://wordpress.org/plugins/jwt-authentication-for-wp-rest-api/)
-- [Devices by pesseba](https://github.com/pesseba)
+- [Devices utility by pesseba](https://github.com/pesseba)
 
 ## License
 

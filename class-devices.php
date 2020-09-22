@@ -8,8 +8,8 @@
 namespace JWTAuth;
 
 /**
- * Display the devices connected with token and let remove them in user profile page
- * developed by Rodrigo M. Souza https://github.com/pesseba
+ * Display the devices connected with token and let remove them in user profile page.
+ * Developed by Rodrigo M. Souza https://github.com/pesseba
  */
 class Devices {
 
@@ -28,7 +28,7 @@ class Devices {
 		add_action( 'after_password_reset', array( $this, 'after_password_reset' ), 10, 2 );
 
 		add_filter( 'jwt_auth_payload', array( $this, 'jwt_auth_payload' ), 10, 2 );
-		add_filter( 'jwt_auth_valid_token_extra', array( $this, 'jwt_auth_valid_token_extra' ), 10, 4 );
+		add_filter( 'jwt_auth_extra_token_check', array( $this, 'check_device_and_pass' ), 10, 4 );
 	}
 
 	/**
@@ -81,7 +81,7 @@ class Devices {
 	 *
 	 * @return string The error message if failed, empty string if it passes.
 	 */
-	public function jwt_auth_valid_token_extra( $error_msg, $user, $token, $payload ) {
+	public function check_device_and_pass( $error_msg, $user, $token, $payload ) {
 
 		// Check if token has device filled.
 		if ( ! empty( $payload->data->user->device ) ) {
@@ -224,8 +224,6 @@ class Devices {
 
 		$this->block_all_tokens( $user->ID );
 	}
-
-
 
 	/**
 	 * Block all access tokens.

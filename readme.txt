@@ -582,9 +582,44 @@ add_filter(
 );
 `
 
+### jwt_auth_extra_token_check
+
+The **jwt_auth_extra_token_check** allows you to add extra criterias to validate the token. If empty, has no problem to proceed. Use empty value to bypass the filter. Any other value will block the token access and returns response with code `jwt_auth_obsolete_token`.
+
+Default value:
+
+`
+''
+`
+
+Usage example:
+
+`
+/**
+ * Modify the validation of token. No-empty values block token validation.
+ *
+ * @param array $response An empty value ''.
+ * @param WP_User $user The authenticated user.
+ * @param string $token The raw token.
+ * @param array $payload The token data.
+ * .
+ * @return array The valid token response.
+ */
+add_filter(
+	'jwt_auth_extra_token_check',
+	function ( $response, $user, $token, $payload ) {
+		// Modify the response here.
+		return $response;
+	},
+	10,
+	4
+);
+`
+
 ## Credits
 [PHP-JWT from firebase](https://github.com/firebase/php-jwt)
 [JWT Authentication for WP REST API](https://wordpress.org/plugins/jwt-authentication-for-wp-rest-api/)
+[Devices utility by pesseba](https://github.com/pesseba)
 
 == Installation ==
 
