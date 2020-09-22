@@ -17,7 +17,7 @@ class Setup {
 	public function __construct() {
 		add_action( 'init', array( $this, 'setup_text_domain' ) );
 
-		$auth = new Auth();
+		$auth    = new Auth();
 		$devices = new Devices();
 
 		add_action( 'rest_api_init', array( $auth, 'register_rest_routes' ) );
