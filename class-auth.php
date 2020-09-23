@@ -583,8 +583,7 @@ class Auth {
 	 */
 	public function rest_pre_dispatch( $result, WP_REST_Server $server, WP_REST_Request $request ) {
 		if ( $this->is_error_response( $this->jwt_error ) ) {
-			$data = $this->jwt_error->get_data();
-			return new WP_REST_Response( $data, $data['statusCode'] );
+			return $this->jwt_error;
 		}
 
 		if ( empty( $result ) ) {
