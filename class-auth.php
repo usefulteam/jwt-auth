@@ -441,8 +441,8 @@ class Auth {
 
 		// If $payload is an error response, then return the default $user_id.
 		if ( $this->is_error_response( $payload ) ) {
-			if ( 'jwt_auth_no_auth_header' === $payload->data['code'] ||
-				'jwt_auth_bad_auth_header' === $payload->data['code']
+			if ( 'jwt_auth_no_auth_header' === $payload->get_error_code() ||
+				'jwt_auth_bad_auth_header' === $payload->get_error_code()
 			) {
 				$request_uri   = $_SERVER['REQUEST_URI'];
 				$rest_api_slug = home_url( '/' . $this->rest_api_slug, 'relative' );
