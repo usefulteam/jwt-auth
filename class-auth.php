@@ -278,13 +278,13 @@ class Auth {
 		}
 
 		if ( ! $auth ) {
-            return new WP_Error(
-                'jwt_auth_no_auth_header',
-                $this->messages['jwt_auth_no_auth_header'],
-                array(
-                    'status' => 403,
-                )
-            );
+                    return new WP_Error(
+                        'jwt_auth_no_auth_header',
+                        $this->messages['jwt_auth_no_auth_header'],
+                        array(
+                            'status' => 403,
+                        )
+                    );
 		}
 
 		/**
@@ -294,26 +294,26 @@ class Auth {
 		list($token) = sscanf( $auth, 'Bearer %s' );
 
 		if ( ! $token ) {
-            return new WP_Error(
-                'jwt_auth_bad_auth_header',
-                $this->messages['jwt_auth_bad_auth_header'],
-                array(
-                    'status' => 403,
-                )
-            );
+                    return new WP_Error(
+                        'jwt_auth_bad_auth_header',
+                        $this->messages['jwt_auth_bad_auth_header'],
+                        array(
+                            'status' => 403,
+                        )
+                    );
 		}
 
 		// Get the Secret Key.
 		$secret_key = defined( 'JWT_AUTH_SECRET_KEY' ) ? JWT_AUTH_SECRET_KEY : false;
 
 		if ( ! $secret_key ) {
-            return new WP_Error(
-                'jwt_auth_bad_config',
-                __( 'JWT is not configurated properly.', 'jwt-auth' ),
-                array(
-                    'status' => 403,
-                )
-            );
+                    return new WP_Error(
+                        'jwt_auth_bad_config',
+                        __( 'JWT is not configurated properly.', 'jwt-auth' ),
+                        array(
+                            'status' => 403,
+                        )
+                    );
 		}
 
 		// Try to decode the token.
@@ -324,25 +324,25 @@ class Auth {
 			// The Token is decoded now validate the iss.
 			if ( $payload->iss !== $this->get_iss() ) {
 				// The iss do not match, return error.
-                return new WP_Error(
-                    'jwt_auth_bad_iss',
-                    __( 'The iss do not match with this server.', 'jwt-auth' ),
-                    array(
-                        'status' => 403,
-                    )
-                );
+                        return new WP_Error(
+                            'jwt_auth_bad_iss',
+                            __( 'The iss do not match with this server.', 'jwt-auth' ),
+                            array(
+                                'status' => 403,
+                            )
+                        );
 			}
 
 			// Check the user id existence in the token.
 			if ( ! isset( $payload->data->user->id ) ) {
 				// No user id in the token, abort!!
-                return new WP_Error(
-                    'jwt_auth_bad_request',
-                    __( 'User ID not found in the token.', 'jwt-auth' ),
-                    array(
-                        'status' => 403,
-                    )
-                );
+                        return new WP_Error(
+                            'jwt_auth_bad_request',
+                            __( 'User ID not found in the token.', 'jwt-auth' ),
+                            array(
+                                'status' => 403,
+                            )
+                        );
 			}
 
 			// So far so good, check if the given user id exists in db.
@@ -350,13 +350,13 @@ class Auth {
 
 			if ( ! $user ) {
 				// No user id in the token, abort!!
-                return new WP_Error(
-                    'jwt_auth_user_not_found',
-                    __( "User doesn't exist", 'jwt-auth' ),
-                    array(
-                        'status' => 403,
-                    )
-                );
+                        return new WP_Error(
+                            'jwt_auth_user_not_found',
+                            __( "User doesn't exist", 'jwt-auth' ),
+                            array(
+                                'status' => 403,
+                            )
+                        );
 			}
 
 			// Check extra condition if exists.
@@ -395,13 +395,13 @@ class Auth {
 			return new WP_REST_Response( $response );
 		} catch ( Exception $e ) {
 			// Something is wrong when trying to decode the token, return error response.
-            return new WP_Error(
-                'jwt_auth_invalid_token',
-                $e->getMessage(),
-                array(
-                    'status' => 403,
-                )
-            );
+                    return new WP_Error(
+                        'jwt_auth_invalid_token',
+                        $e->getMessage(),
+                        array(
+                            'status' => 403,
+                        )
+                    );
 		}
 	}
 
