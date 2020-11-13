@@ -52,7 +52,7 @@ class Auth {
      * Setup action & filter hooks.
      */
     public function __construct() {
-        $this->namespace = 'jwt-auth/v1';
+        $this->namespace = 'jwt-auth/v2';
 
         $this->messages = array(
             'jwt_auth_no_auth_header'  => __( 'Authorization header not found.', 'jwt-auth' ),
@@ -83,6 +83,16 @@ class Auth {
                 'permission_callback' => '__return_true',
             )
         );
+
+        register_rest_route(
+            $this->namespace,
+            'token/refresh',
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( $this, 'refresh_token' ),
+                'permission_callback' => '__return_true',
+            )
+        );
     }
 
     /**
@@ -91,10 +101,14 @@ class Auth {
     public function add_cors_support() {
         $enable_cors = defined( 'JWT_AUTH_CORS_ENABLE' ) ? JWT_AUTH_CORS_ENABLE : false;
 
-        if ( $enable_cors ) {
-            $headers = apply_filters( 'jwt_auth_cors_allow_headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization' );
-
-            header( sprintf( 'Access-Control-Allow-Headers: %s', $headers ) );
+        if ($enable_cors) {
+            $headers = apply_filters(
+                'jwt_auth_cors_allow_headers',
+                'Access-Control-Allow-Headers, Content-Type, Authorization'
+            );
+            header(
+                sprintf('Access-Control-Allow-Headers: %s', $headers)
+            );
         }
     }
 
@@ -181,7 +195,7 @@ class Auth {
      *
      * @return WP_REST_Response|string Return as raw token string or as a formatted WP_REST_Response.
      */
-    public function generate_token( $user, $return_raw = true ) {
+    public function generate_token( \WP_User $user, $return_raw = true ) {
         $secret_key = defined( 'JWT_AUTH_SECRET_KEY' ) ? JWT_AUTH_SECRET_KEY : false;
         $issued_at  = time();
         $not_before = $issued_at;
@@ -391,7 +405,7 @@ class Auth {
             $failed_msg = apply_filters( 'jwt_auth_extra_token_check', '', $user, $token, $payload );
 
             if ( ! empty( $failed_msg ) ) {
-                // No user id in the token, abort!!
+                // Extra token check failed
                 return new WP_REST_Response(
                     array(
                         'success'    => false,
@@ -468,6 +482,12 @@ class Auth {
             return $user_id;
         }
 
+        $validate_uri = strpos( $_SERVER['REQUEST_URI'], 'v1/login' );
+
+        if ( $validate_uri > 0 ) {
+            return $user_id;
+        }
+
         $payload = $this->validate_token( false );
 
         // If $payload is an error response, then return the default $user_id.
@@ -477,14 +497,23 @@ class Auth {
             ) {
                 $request_uri   = $_SERVER['REQUEST_URI'];
                 $rest_api_slug = home_url( '/' . $this->rest_api_slug, 'relative' );
+                $token_request_uri = sprintf(
+                    '%s/%s/token',
+                    $rest_api_slug,
+                    $this->namespace
+                );
 
-                if ( $rest_api_slug . '/jwt-auth/v1/token' !== $request_uri ) {
+                if (strtolower($token_request_uri) !== strtolower($request_uri) ) {
                     // Whitelist some endpoints by default (without trailing * char).
                     $default_whitelist = array(
                         // WooCommerce namespace.
                         $rest_api_slug . '/wc/',
                         $rest_api_slug . '/wc-auth/',
                         $rest_api_slug . '/wc-analytics/',
+
+                        // Whitelist the old jwt plug-in's endpoints as long as we need to have both
+                        // in parallel
+                        $rest_api_slug . '/jwt-auth/v1/token',
 
                         // WordPress namespace.
                         $rest_api_slug . '/wp/v2/',
@@ -516,8 +545,23 @@ class Auth {
             return $user_id;
         }
 
+        add_filter('jwt_get_current_user', function () use ($payload) {
+            return $payload;
+        }, 11, 1);
+
         // Everything is ok here, return the user ID stored in the token.
         return $payload->data->user->id;
+    }
+
+
+    /**
+     * generates a new token for the user if the user has a valid token
+     */
+    public function refresh_token()
+    {
+        $payload = apply_filters('jwt_get_current_user', null);
+        $user = get_user_by( 'id', $payload->data->user->id );
+        return $this->generate_token($user, false);
     }
 
     /**
@@ -526,7 +570,7 @@ class Auth {
      * @return bool
      */
     public function is_whitelisted() {
-        $whitelist = apply_filters( 'jwt_auth_whitelist', array() );
+        $whitelist = apply_filters('jwt_auth_whitelist', array());
 
         if ( empty( $whitelist ) || ! is_array( $whitelist ) ) {
             return false;
