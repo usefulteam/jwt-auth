@@ -488,6 +488,7 @@ class Auth {
 
 						// WordPress namespace.
 						$rest_api_slug . '/wp/v2/',
+						$rest_api_slug . '/oembed/',
 					);
 
 					// Well, we let you adjust this default whitelist :).
