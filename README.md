@@ -131,7 +131,7 @@ You can use the optional parameter `device` with the device identifier to let us
 	"success": false,
 	"statusCode": 403,
 	"code": "invalid_username",
-	"message": "Unknown username. Check again or try your email address.",
+	"message": "Unknown username. Try again or check your email address.",
 	"data": []
 }
 ```
