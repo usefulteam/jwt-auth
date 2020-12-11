@@ -234,7 +234,7 @@ If the token is invalid an error will be returned. Here are some samples of erro
 	"success": false,
 	"statusCode": 403,
 	"code": "jwt_auth_bad_config",
-	"message": "JWT is not configurated properly.",
+	"message": "JWT is not configured properly.",
 	"data": []
 }
 ```
