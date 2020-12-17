@@ -483,6 +483,7 @@ class Auth {
 					$default_whitelist = array(
 						// WooCommerce namespace.
 						$rest_api_slug . '/wc/',
+						$rest_api_slug . '/wc-admin/',
 						$rest_api_slug . '/wc-auth/',
 						$rest_api_slug . '/wc-analytics/',
 
