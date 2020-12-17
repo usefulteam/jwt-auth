@@ -144,7 +144,7 @@ class Auth {
 					'success'    => false,
 					'statusCode' => 403,
 					'code'       => 'jwt_auth_bad_config',
-					'message'    => __( 'JWT is not configurated properly.', 'jwt-auth' ),
+					'message'    => __( 'JWT is not configured properly.', 'jwt-auth' ),
 					'data'       => array(),
 				),
 				403
@@ -328,7 +328,7 @@ class Auth {
 					'success'    => false,
 					'statusCode' => 403,
 					'code'       => 'jwt_auth_bad_config',
-					'message'    => __( 'JWT is not configurated properly.', 'jwt-auth' ),
+					'message'    => __( 'JWT is not configured properly.', 'jwt-auth' ),
 					'data'       => array(),
 				),
 				403
