@@ -557,13 +557,9 @@ class Auth {
 					return true;
 				}
 			} else {
-				/**
-				 * TODO: Maybe use regex to match glob-style pattern.
-				 */
-				$endpoint = str_ireplace( '*', '', $endpoint );
-				$endpoint = untrailingslashit( $endpoint );
+				$regex = '/' . str_replace( '/', '\/', $endpoint ) . '/';
 
-				if ( 0 === stripos( $request_uri, $endpoint ) ) {
+				if ( preg_match( $regex, $request_uri ) ) {
 					return true;
 				}
 			}
