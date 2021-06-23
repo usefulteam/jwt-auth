@@ -93,6 +93,7 @@ Also, two new endpoints are added to this namespace.
 | ------------------------------------- | --------- |
 | _/wp-json/jwt-auth/v1/token_          | POST      |
 | _/wp-json/jwt-auth/v1/token/validate_ | POST      |
+| _/wp-json/jwt-auth/v1/token/refresh_  | POST      |
 
 ## Requesting/ Generating Token
 
@@ -119,7 +120,8 @@ You can use the optional parameter `device` with the device identifier to let us
 		"nicename": "contactjavas",
 		"firstName": "Bagus Javas",
 		"lastName": "Heruyanto",
-		"displayName": "contactjavas"
+		"displayName": "contactjavas",
+		"refreshToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvc2VydmljZS50ZXN0LmJubi5kZSIsImlhdCI6MTYyNDQ1NzA2MSwibmJmIjoxNjI0NDU3MDYxLCJleHAiOjE2MjcwNDkwNjEsImRhdGEiOnsidXNlciI6eyJpZCI6NTA1NjUsImRldmljZSI6IiIsInBhc3MiOiJkZGU1YThlM2ZmYjQ2ZTBiNzY4OWI5M2QwNzk0MTk5OCJ9fX0.UNlvDB2p601BNXDa-OBtt5jnXjttx0bL7VhHDyud8-E"
 	}
 }
 ```
@@ -224,6 +226,17 @@ But if you want to test or validate the token manually, then send a **POST** req
 	"data": []
 }
 ```
+
+## Refreshing the Access Token
+
+For security reasons, third-party applications that are integrating with your authentication server will not store the user's username and password. Instead they will store the refresh token in a user-specific storage that is only accessible for the user. The refresh token can be used to re-authenticate as the same user and generate a new access token.
+
+To generate a new access token, send the refresh token in the HTTP **POST** header _Authorization: Bearer_:
+
+`/wp-json/jwt-auth/v1/token/refresh`
+
+The response is the same as for the `/token` response - only without a new `refreshToken`.
+
 
 ## Error Responses
 
@@ -458,7 +471,7 @@ The `jwt_auth_expire` allows you to change the [**exp**](https://tools.ietf.org/
 Default Value:
 
 ```
-time() + (DAY_IN_SECONDS * 7)
+time() + HOUR_IN_SECONDS
 ```
 
 Usage example:
@@ -474,6 +487,71 @@ Usage example:
  */
 add_filter(
 	'jwt_auth_expire',
+	function ( $expire, $issued_at ) {
+		// Modify the "expire" here.
+		return $expire;
+	},
+	10,
+	2
+);
+```
+
+### jwt_auth_refresh_not_before
+
+The `jwt_auth_refresh_not_before` filter hook allows you to change the [**nbf**](https://tools.ietf.org/html/rfc7519#section-4.1.5) value before the payload of the refresh token is encoded.
+
+Default Value:
+
+```
+// Creation time.
+time()
+```
+
+Usage example:
+
+```php
+/**
+ * Change the refresh token's nbf value.
+ *
+ * @param int $not_before The default "nbf" value in timestamp.
+ * @param int $issued_at The "iat" value in timestamp.
+ *
+ * @return int The "nbf" value.
+ */
+add_filter(
+	'jwt_auth_refresh_not_before',
+	function ( $not_before, $issued_at ) {
+		// Modify the "not_before" here.
+		return $not_before;
+	},
+	10,
+	2
+);
+```
+
+### jwt_auth_refresh_expire
+
+The `jwt_auth_refresh_expire` filter hook allows you to change the [**exp**](https://tools.ietf.org/html/rfc7519#section-4.1.4) value before the payload of the refresh token is encoded.
+
+Default Value:
+
+```
+time() + (DAY_IN_SECONDS * 30)
+```
+
+Usage example:
+
+```php
+/**
+ * Change the refresh token's expire value.
+ *
+ * @param int $expire The default "exp" value in timestamp.
+ * @param int $issued_at The "iat" value in timestamp.
+ *
+ * @return int The "nbf" value.
+ */
+add_filter(
+	'jwt_auth_refresh_expire',
 	function ( $expire, $issued_at ) {
 		// Modify the "expire" here.
 		return $expire;
