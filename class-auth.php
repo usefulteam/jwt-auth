@@ -83,6 +83,16 @@ class Auth {
 				'permission_callback' => '__return_true',
 			)
 		);
+
+		register_rest_route(
+			$this->namespace,
+			'token/refresh',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'refresh_token' ),
+				'permission_callback' => '__return_true',
+			)
+		);
 	}
 
 	/**
@@ -170,11 +180,16 @@ class Auth {
 		}
 
 		// Valid credentials, the user exists, let's generate the token.
-		return $this->generate_token( $user, false );
+		$response = $this->generate_token( $user, false );
+
+		// Include the refresh token in the user authentication response.
+		$response['data']['refreshToken'] = $this->generate_refresh_token( $user, true );
+
+		return $response;
 	}
 
 	/**
-	 * Generate token
+	 * Generate access token.
 	 *
 	 * @param WP_User $user The WP_User object.
 	 * @param bool    $return_raw Whether or not to return as raw token string.
@@ -182,12 +197,46 @@ class Auth {
 	 * @return WP_REST_Response|string Return as raw token string or as a formatted WP_REST_Response.
 	 */
 	public function generate_token( $user, $return_raw = true ) {
-		$secret_key = defined( 'JWT_AUTH_SECRET_KEY' ) ? JWT_AUTH_SECRET_KEY : false;
 		$issued_at  = time();
 		$not_before = $issued_at;
 		$not_before = apply_filters( 'jwt_auth_not_before', $not_before, $issued_at );
-		$expire     = $issued_at + ( DAY_IN_SECONDS * 7 );
+		$expire     = $issued_at + HOUR_IN_SECONDS;
 		$expire     = apply_filters( 'jwt_auth_expire', $expire, $issued_at );
+
+		return $this->do_generate_token( $issued_at, $not_before, $expire, $user, $return_raw );
+	}
+
+	/**
+	 * Generate refresh token.
+	 *
+	 * @param WP_User $user The WP_User object.
+	 * @param bool    $return_raw Whether or not to return as raw token string.
+	 *
+	 * @return WP_REST_Response|string Return as raw token string or as a formatted WP_REST_Response.
+	 */
+	public function generate_refresh_token( $user, $return_raw = true ) {
+		$issued_at  = time();
+		$not_before = $issued_at;
+		$not_before = apply_filters( 'jwt_auth_refresh_not_before', $not_before, $issued_at );
+		$expire     = $issued_at + ( DAY_IN_SECONDS * 30 );
+		$expire     = apply_filters( 'jwt_auth_refresh_expire', $expire, $issued_at );
+
+		return $this->do_generate_token( $issued_at, $not_before, $expire, $user, $return_raw );
+	}
+
+	/**
+	 * Generate token
+	 *
+	 * @param int     $issued_at Unix timestamp of when the token was generated.
+	 * @param int     $not_before Unix timestamp of when the token becomes valid.
+	 * @param int     $expire Unix timestamp of when the token expires.
+	 * @param WP_User $user The WP_User object.
+	 * @param bool    $return_raw Whether or not to return as raw token string.
+	 *
+	 * @return WP_REST_Response|string Return as raw token string or as a formatted WP_REST_Response.
+	 */
+	private function do_generate_token( $issued_at, $not_before, $expire, $user, $return_raw = true ) {
+		$secret_key = defined( 'JWT_AUTH_SECRET_KEY' ) ? JWT_AUTH_SECRET_KEY : false;
 
 		$payload = array(
 			'iss'  => $this->get_iss(),
