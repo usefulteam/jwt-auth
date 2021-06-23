@@ -486,6 +486,26 @@ class Auth {
 	}
 
 	/**
+	 * Validates refresh token and generates new access token.
+	 *
+	 * @return WP_REST_Response Returns WP_REST_Response.
+	 */
+	public function refresh_token( $return_response = true ) {
+		$payload = $this->validate_token( false );
+
+		// If we receive a REST response, then validation failed.
+		if ($payload instanceof WP_REST_Response) {
+			return $payload;
+		}
+
+		// Generate a new access token.
+		$user = get_user_by( 'id', $payload->data->user->id );
+		$response = $this->generate_token( $user, false );
+
+		return $response;
+	}
+
+	/**
 	 * This is our Middleware to try to authenticate the user according to the token sent.
 	 *
 	 * @param int|bool $user_id User ID if one has been determined, false otherwise.
