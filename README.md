@@ -121,7 +121,7 @@ You can use the optional parameter `device` with the device identifier to let us
 		"firstName": "Bagus Javas",
 		"lastName": "Heruyanto",
 		"displayName": "contactjavas",
-		"refreshToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvc2VydmljZS50ZXN0LmJubi5kZSIsImlhdCI6MTYyNDQ1NzA2MSwibmJmIjoxNjI0NDU3MDYxLCJleHAiOjE2MjcwNDkwNjEsImRhdGEiOnsidXNlciI6eyJpZCI6NTA1NjUsImRldmljZSI6IiIsInBhc3MiOiJkZGU1YThlM2ZmYjQ2ZTBiNzY4OWI5M2QwNzk0MTk5OCJ9fX0.UNlvDB2p601BNXDa-OBtt5jnXjttx0bL7VhHDyud8-E"
+		"refreshToken": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvc2VydmljZS50ZXN0LmJubi5kZSIsImlhdCI6MTYyNDQ1NzA2MSwibmJmIjoxNjI0NDU3MDYxLCJleHAiOjE2MjcwNDkwNjEsImRhdGEiOnsidXNlciI6eyJpZCI6NTA1NjUsImRldmljZSI6IiIsInBhc3MiOiJkZGU1YThlM2ZmYjQ2ZTBiNzY4OWI5M2QwNzk0MTk5OCJ9fX0.UNlvDB2p601BNXDa-OBtt5jnXjttx0bL7VhHDyud8-E"
 	}
 }
 ```
