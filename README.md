@@ -471,7 +471,7 @@ The `jwt_auth_expire` allows you to change the [**exp**](https://tools.ietf.org/
 Default Value:
 
 ```
-time() + HOUR_IN_SECONDS
+time() + (MINUTE_IN_SECONDS * 10)
 ```
 
 Usage example:
