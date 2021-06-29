@@ -102,7 +102,7 @@ class Auth {
 		$enable_cors = defined( 'JWT_AUTH_CORS_ENABLE' ) ? JWT_AUTH_CORS_ENABLE : false;
 
 		if ( $enable_cors ) {
-			$headers = apply_filters( 'jwt_auth_cors_allow_headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization' );
+			$headers = apply_filters( 'jwt_auth_cors_allow_headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization, Cookie' );
 
 			header( sprintf( 'Access-Control-Allow-Headers: %s', $headers ) );
 		}
@@ -161,7 +161,20 @@ class Auth {
 			);
 		}
 
-		$user = $this->authenticate_user( $username, $password, $custom_auth );
+		if ( isset( $_COOKIE['refresh_token'] ) ) {
+			if ( empty( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
+				$_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $_COOKIE['refresh_token'];
+			}
+			$payload = $this->validate_token( false );
+
+			// If we receive a REST response, then validation failed.
+			if ( $payload instanceof WP_REST_Response ) {
+				return $payload;
+			}
+			$user = get_user_by( 'id', $payload->data->user->id );
+		} else {
+			$user = $this->authenticate_user( $username, $password, $custom_auth );
+		}
 
 		// If the authentication is failed return error response.
 		if ( is_wp_error( $user ) ) {
@@ -182,8 +195,10 @@ class Auth {
 		// Valid credentials, the user exists, let's generate the token.
 		$response = $this->generate_token( $user, false );
 
-		// Include the refresh token in the user authentication response.
-		$response['data']['refreshToken'] = $this->generate_refresh_token( $user, true );
+		// Add the refresh token as a HttpOnly cookie to the response.
+		if ($username && $password) {
+			$this->send_refresh_token( $user );
+		}
 
 		return $response;
 	}
@@ -279,6 +294,21 @@ class Auth {
 
 		// Let the user modify the data before send it back.
 		return apply_filters( 'jwt_auth_valid_credential_response', $response, $user );
+	}
+
+	/**
+	 * Sends a new refresh token.
+	 *
+	 * @param WP_User $user The WP_User object.
+	 *
+	 * @return void
+	 */
+	public function send_refresh_token( \WP_User $user ) {
+		$secret_key = defined( 'JWT_AUTH_SECRET_KEY' ) ? JWT_AUTH_SECRET_KEY : false;
+
+		$refresh_token = $this->generate_refresh_token( $user, true );
+		$payload = JWT::decode( $refresh_token, $secret_key, array( $this->get_alg() ) );
+		setcookie( 'refresh_token', $refresh_token, $payload->exp, COOKIEPATH, COOKIE_DOMAIN, false, true );
 	}
 
 	/**
@@ -486,23 +516,42 @@ class Auth {
 	}
 
 	/**
-	 * Validates refresh token and generates new access token.
+	 * Validates refresh token and generates a new refresh token.
 	 *
 	 * @return WP_REST_Response Returns WP_REST_Response.
 	 */
 	public function refresh_token( $return_response = true ) {
+		if ( !isset( $_COOKIE['refresh_token'] ) || !empty( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
+			return new WP_REST_Response(
+				array(
+					'success'    => false,
+					'statusCode' => 403,
+					'code'       => 'jwt_auth_no_auth_header',
+					'message'    => $this->messages['jwt_auth_no_auth_header'],
+					'data'       => array(),
+				)
+			);
+		}
+		$_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $_COOKIE['refresh_token'];
 		$payload = $this->validate_token( false );
 
 		// If we receive a REST response, then validation failed.
-		if ($payload instanceof WP_REST_Response) {
+		if ( $payload instanceof WP_REST_Response ) {
 			return $payload;
 		}
 
 		// Generate a new access token.
 		$user = get_user_by( 'id', $payload->data->user->id );
-		$response = $this->generate_token( $user, false );
+		$this->send_refresh_token( $user );
 
-		return $response;
+		$response = array(
+			'success'    => true,
+			'statusCode' => 200,
+			'code'       => 'jwt_auth_valid_token',
+			'message'    => __( 'Token is valid', 'jwt-auth' ),
+			'data'       => array(),
+		);
+		return new WP_REST_Response( $response );
 	}
 
 	/**
@@ -547,7 +596,7 @@ class Auth {
 				$request_uri   = $_SERVER['REQUEST_URI'];
 				$rest_api_slug = home_url( '/' . $this->rest_api_slug, 'relative' );
 
-				if ( $rest_api_slug . '/jwt-auth/v1/token' !== $request_uri ) {
+				if ( strpos( $request_uri, $rest_api_slug . '/jwt-auth/v1/token' ) !== 0 ) {
 					// Whitelist some endpoints by default (without trailing * char).
 					$default_whitelist = array(
 						// WooCommerce namespace.
