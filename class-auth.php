@@ -215,7 +215,7 @@ class Auth {
 		$issued_at  = time();
 		$not_before = $issued_at;
 		$not_before = apply_filters( 'jwt_auth_not_before', $not_before, $issued_at );
-		$expire     = $issued_at + (MINUTE_IN_SECONDS * 10);
+		$expire     = $issued_at + ( MINUTE_IN_SECONDS * 10 );
 		$expire     = apply_filters( 'jwt_auth_expire', $expire, $issued_at );
 
 		return $this->do_generate_token( $issued_at, $not_before, $expire, $user, $return_raw );
