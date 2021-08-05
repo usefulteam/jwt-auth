@@ -151,12 +151,14 @@ If you're adding the filter inside theme and the whitelisting doesn't work, plea
 
 `
 add_filter( 'jwt_auth_whitelist', function ( $endpoints ) {
-	return array(
+	$your_endpoints = array(
 		'/wp-json/custom/v1/webhook/*',
 		'/wp-json/custom/v1/otp/*',
 		'/wp-json/custom/v1/account/check',
 		'/wp-json/custom/v1/register',
 	);
+
+	return array_unique( array_merge( $endpoints, $your_endpoints ) );
 } );
 `
 
