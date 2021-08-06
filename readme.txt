@@ -4,7 +4,7 @@ Contributors: contactjavas
 Donate link: https://www.paypal.me/bagusjavas
 Tags: jwt, jwt-auth, token-authentication, json-web-token
 Requires at least: 5.2
-Tested up to: 5.5
+Tested up to: 5.8
 Stable tag: trunk
 Requires PHP: 7.2
 License: GPLv3
@@ -707,6 +707,13 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 3. Other error responses
 
 == Changelog ==
+= 2.0.0 =
+- Breaking change: rename `jwt_auth_valid_token_extra` filter to `jwt_auth_extra_token_check`. Please check if you use this filter.
+- Breaking bugfix: the actual http statusCode didn't follow the response statusCode. Now the actual http statusCode follows the response statusCode.
+- New feature: connected device. Thanks @pesseba.
+- Might be a breaking change: Add WordPress & WC default endpoints to `jwt_auth_default_whitelist` to prevent error when visiting WordPress admin area.
+- Documentation: prevent misleading example by updating the `jwt_auth_whitelist` usage.
+
 = 1.4.2 =
 - Bugfix: add `permission_callback` argument since it's required in WP 5.5
 

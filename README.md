@@ -681,7 +681,7 @@ add_filter(
 ## Credits
 
 - [PHP-JWT from firebase](https://github.com/firebase/php-jwt)
-- [JWT Authentication for WP REST API](https://wordpress.org/plugins/jwt-authentication-for-wp-rest-api/)
+- [JWT Authentication for WP REST API](https://wordpress.org/plugins/jwt-authentication-for-wp-rest-api/). My _JWT-Auth_ plugin was a "copy-then-modify" of _JWT Authentication for WP REST API_ plugin.
 - [Devices utility by pesseba](https://github.com/pesseba)
 
 ## License
