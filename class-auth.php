@@ -233,6 +233,52 @@ class Auth {
 	}
 
 	/**
+	 * Generate token and saves as a cookie on wordpress login
+	 *
+	 * @return void
+	 */
+	public function wp_login_hook($user_login){
+
+		$set_cookie_on_wordpress_login = false;
+		$set_cookie_on_wordpress_login = apply_filters( 'jwt_set_cookie', $set_cookie_on_wordpress_login );
+
+		$do_hook_on_wordpress_login = false;
+		$do_hook_on_wordpress_login = apply_filters( 'jwt_do_hook', $do_hook_on_wordpress_login );
+
+		if ( $set_cookie_on_wordpress_login ){
+			$user        = get_user_by('login', $user_login);
+
+			$token       = $this->generate_token($user, true);
+
+			$issued_at   = time();
+			$expire      = $issued_at + ( DAY_IN_SECONDS * 7 );
+
+			$cookie_name = 'JWT_AUTH';
+			$path        = '/';
+			$secure      = true;
+			$httponly    = false;
+
+			setcookie(
+				apply_filters( 'jwt_cookie_name', $cookie_name),
+				$token,
+				apply_filters( 'jwt_auth_expire', $expire, $issued_at ),
+				apply_filters( 'jwt_cookie_path', $path ),
+				$_SERVER['HTTP_HOST'],
+				apply_filters( 'jwt_cookie_secure', $secure ),
+				apply_filters( 'jwt_cookie_httponly', $httponly ),
+			);
+		}
+
+		if ( $do_hook_on_wordpress_login ){
+			$user        = get_user_by('login', $user_login);
+
+			$token       = $this->generate_token($user, false);
+			do_action('jwt_wp_login', $token);
+		}
+
+	}
+
+	/**
 	 * Get the token issuer.
 	 *
 	 * @return string The token issuer (iss).
