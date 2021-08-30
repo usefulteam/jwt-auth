@@ -26,7 +26,8 @@ class Devices {
 
 		add_action( 'profile_update', array( $this, 'profile_update' ), 10, 2 );
 		add_action( 'after_password_reset', array( $this, 'after_password_reset' ), 10, 2 );
-
+		add_action( 'user_register', array( $this, 'after_user_creation' ), 10, 1 );
+		
 		add_filter( 'jwt_auth_payload', array( $this, 'jwt_auth_payload' ), 10, 2 );
 		add_filter( 'jwt_auth_extra_token_check', array( $this, 'check_device_and_pass' ), 10, 4 );
 	}
@@ -223,6 +224,18 @@ class Devices {
 	public function after_password_reset( $user, $new_pass ) {
 
 		$this->block_all_tokens( $user->ID );
+	}
+	
+	/**
+	 * Fires after the user' is created
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param int 		$user_id    The user ID.
+	 */
+	public function after_user_creation( $user_id ) {
+		
+		$this->block_all_tokens( $user_id );
 	}
 
 	/**
