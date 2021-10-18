@@ -117,7 +117,7 @@ It will validates the user credentials, and returns success response including a
 	"success": false,
 	"statusCode": 403,
 	"code": "invalid_username",
-	"message": "Unknown username. Check again or try your email address.",
+	"message": "Unknown username. Try again or check your email address.",
 	"data": []
 }
 `
