@@ -144,7 +144,7 @@ class Auth {
 					'success'    => false,
 					'statusCode' => 403,
 					'code'       => 'jwt_auth_bad_config',
-					'message'    => __( 'JWT is not configurated properly.', 'jwt-auth' ),
+					'message'    => __( 'JWT is not configured properly.', 'jwt-auth' ),
 					'data'       => array(),
 				),
 				403
@@ -328,7 +328,7 @@ class Auth {
 					'success'    => false,
 					'statusCode' => 403,
 					'code'       => 'jwt_auth_bad_config',
-					'message'    => __( 'JWT is not configurated properly.', 'jwt-auth' ),
+					'message'    => __( 'JWT is not configured properly.', 'jwt-auth' ),
 					'data'       => array(),
 				),
 				403
@@ -483,11 +483,13 @@ class Auth {
 					$default_whitelist = array(
 						// WooCommerce namespace.
 						$rest_api_slug . '/wc/',
+						$rest_api_slug . '/wc-admin/',
 						$rest_api_slug . '/wc-auth/',
 						$rest_api_slug . '/wc-analytics/',
 
 						// WordPress namespace.
 						$rest_api_slug . '/wp/v2/',
+						$rest_api_slug . '/oembed/',
 					);
 
 					// Well, we let you adjust this default whitelist :).
@@ -556,13 +558,9 @@ class Auth {
 					return true;
 				}
 			} else {
-				/**
-				 * TODO: Maybe use regex to match glob-style pattern.
-				 */
-				$endpoint = str_ireplace( '*', '', $endpoint );
-				$endpoint = untrailingslashit( $endpoint );
+				$regex = '/' . str_replace( '/', '\/', $endpoint ) . '/';
 
-				if ( 0 === stripos( $request_uri, $endpoint ) ) {
+				if ( preg_match( $regex, $request_uri ) ) {
 					return true;
 				}
 			}

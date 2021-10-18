@@ -166,12 +166,14 @@ If you're adding the filter inside theme and the whitelisting doesn't work, plea
 
 ```php
 add_filter( 'jwt_auth_whitelist', function ( $endpoints ) {
-	return array(
+	$your_endpoints = array(
 		'/wp-json/custom/v1/webhook/*',
 		'/wp-json/custom/v1/otp/*',
 		'/wp-json/custom/v1/account/check',
 		'/wp-json/custom/v1/register',
 	);
+
+	return array_unique( array_merge( $endpoints, $your_endpoints ) );
 } );
 ```
 
@@ -234,7 +236,7 @@ If the token is invalid an error will be returned. Here are some samples of erro
 	"success": false,
 	"statusCode": 403,
 	"code": "jwt_auth_bad_config",
-	"message": "JWT is not configurated properly.",
+	"message": "JWT is not configured properly.",
 	"data": []
 }
 ```
@@ -679,7 +681,7 @@ add_filter(
 ## Credits
 
 - [PHP-JWT from firebase](https://github.com/firebase/php-jwt)
-- [JWT Authentication for WP REST API](https://wordpress.org/plugins/jwt-authentication-for-wp-rest-api/)
+- [JWT Authentication for WP REST API](https://wordpress.org/plugins/jwt-authentication-for-wp-rest-api/). My _JWT-Auth_ plugin was a "copy-then-modify" of _JWT Authentication for WP REST API_ plugin.
 - [Devices utility by pesseba](https://github.com/pesseba)
 
 ## License

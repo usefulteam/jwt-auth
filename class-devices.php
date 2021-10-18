@@ -26,7 +26,8 @@ class Devices {
 
 		add_action( 'profile_update', array( $this, 'profile_update' ), 10, 2 );
 		add_action( 'after_password_reset', array( $this, 'after_password_reset' ), 10, 2 );
-
+		add_action( 'user_register', array( $this, 'after_user_creation' ), 10, 1 );
+		
 		add_filter( 'jwt_auth_payload', array( $this, 'jwt_auth_payload' ), 10, 2 );
 		add_filter( 'jwt_auth_extra_token_check', array( $this, 'check_device_and_pass' ), 10, 4 );
 	}
@@ -224,6 +225,18 @@ class Devices {
 
 		$this->block_all_tokens( $user->ID );
 	}
+	
+	/**
+	 * Fires after the user' is created
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param int 		$user_id    The user ID.
+	 */
+	public function after_user_creation( $user_id ) {
+		
+		$this->refresh_pass( $user_id );
+	}
 
 	/**
 	 * Block all access tokens.
@@ -238,6 +251,7 @@ class Devices {
 		global $wpdb;
 
 		// ! Can we not using a direct database call? Because it is discouraged in wpcs.
+		// This is because performance. The key jwt_auth_device_% is has generic key name, so this is necessary. The query uses prepare() to avoid insections anyway
 		$wpdb->query(
 			$wpdb->prepare(
 				"DELETE FROM $wpdb->usermeta WHERE user_id = %d AND meta_key LIKE %s",
@@ -256,7 +270,11 @@ class Devices {
 	 * @param int $user_id The user id.
 	 */
 	private function refresh_pass( $user_id ) {
-		update_user_meta( $user_id, 'jwt_auth_pass', (string) md5( uniqid( wp_rand(), true ) ) );
+		$pass = (string) md5( uniqid( wp_rand(), true ));
+		if(!empty(update_user_meta( $user_id, 'jwt_auth_pass', $pass ) )){
+			return $pass;
+		}
+		return '';
 	}
 
 	// -------------------------------------------------------------------------------------------------------
@@ -266,16 +284,15 @@ class Devices {
 	 */
 	public function remove_device() {
 
-		// TODO: nonce verification.
-
+		$nonce = isset( $_POST['nonce'] ) ? $_POST['nonce'] : ''; 
 		$device  = isset( $_POST['device'] ) ? sanitize_text_field( $_POST['device'] ) : ''; // phpcs:ignore
 		$user_id = isset( $_POST['user_id'] ) && is_numeric( $_POST['user_id'] ) ? absint( $_POST['user_id'] ) : 0; // phpcs:ignore
-
-		// Set current user to superadmin with permission to perform changes.
-		$current_user_id = get_current_user_id();
-
-		// ? Would this work even if there's no user with ID 1?
-		wp_set_current_user( 1 );
+		
+		if(!wp_verify_nonce( $nonce, 'jwt_auth_remove_device_'.$user_id)){
+			wp_send_json_error();
+			wp_die();
+			return;
+		}
 
 		if ( delete_user_meta( $user_id, 'jwt_auth_device', $device ) ) {
 			delete_user_meta( $user_id, $this->sanitize_device_key( $device ) );
@@ -283,9 +300,6 @@ class Devices {
 		} else {
 			wp_send_json_error();
 		}
-
-		// Go back to the last user.
-		wp_set_current_user( $current_user_id );
 
 		wp_die();
 	}
@@ -399,6 +413,7 @@ class Devices {
 					'action': 'remove_device',
 					'user_id': user_id,
 					'device': device_name,
+					'nonce': '<?php echo wp_create_nonce('jwt_auth_remove_device_'.$user_id ); ?>',
 				};
 
 				jQuery.post(ajaxurl, data, function(response) {
