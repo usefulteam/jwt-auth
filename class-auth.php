@@ -162,10 +162,7 @@ class Auth {
 		}
 
 		if ( isset( $_COOKIE['refresh_token'] ) ) {
-			if ( empty( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
-				$_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $_COOKIE['refresh_token'];
-			}
-			$payload = $this->validate_token( false );
+			$payload = $this->validate_token( $_COOKIE['refresh_token'], false );
 
 			// If we receive a REST response, then validation failed.
 			if ( $payload instanceof WP_REST_Response ) {
@@ -351,53 +348,56 @@ class Auth {
 	 * Main validation function, this function try to get the Autentication
 	 * headers and decoded.
 	 *
+	 * @param string $token The token to validate. If omitted, the token is read from the HTTP Authorization header.
 	 * @param bool $return_response Either to return full WP_REST_Response or to return the payload only.
 	 *
 	 * @return WP_REST_Response | Array Returns WP_REST_Response or token's $payload.
 	 */
-	public function validate_token( $return_response = true ) {
-		/**
-		 * Looking for the HTTP_AUTHORIZATION header, if not present just
-		 * return the user.
-		 */
-		$headerkey = apply_filters( 'jwt_auth_authorization_header', 'HTTP_AUTHORIZATION' );
-		$auth      = isset( $_SERVER[ $headerkey ] ) ? $_SERVER[ $headerkey ] : false;
+	public function validate_token( $token = '', $return_response = true ) {
+		if ( $token === '' ) {
+			/**
+			 * Looking for the HTTP_AUTHORIZATION header, if not present just
+			 * return the user.
+			 */
+			$headerkey = apply_filters( 'jwt_auth_authorization_header', 'HTTP_AUTHORIZATION' );
+			$auth      = isset( $_SERVER[ $headerkey ] ) ? $_SERVER[ $headerkey ] : false;
 
-		// Double check for different auth header string (server dependent).
-		if ( ! $auth ) {
-			$auth = isset( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) ? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] : false;
-		}
+			// Double check for different auth header string (server dependent).
+			if ( ! $auth ) {
+				$auth = isset( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) ? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] : false;
+			}
 
-		if ( ! $auth ) {
-			return new WP_REST_Response(
-				array(
-					'success'    => false,
-					'statusCode' => 401,
-					'code'       => 'jwt_auth_no_auth_header',
-					'message'    => $this->messages['jwt_auth_no_auth_header'],
-					'data'       => array(),
-				),
-				401
-			);
-		}
+			if ( ! $auth ) {
+				return new WP_REST_Response(
+					array(
+						'success'    => false,
+						'statusCode' => 401,
+						'code'       => 'jwt_auth_no_auth_header',
+						'message'    => $this->messages['jwt_auth_no_auth_header'],
+						'data'       => array(),
+					),
+					401
+				);
+			}
 
-		/**
-		 * The HTTP_AUTHORIZATION is present, verify the format.
-		 * If the format is wrong return the user.
-		 */
-		list($token) = sscanf( $auth, 'Bearer %s' );
+			/**
+			 * The HTTP_AUTHORIZATION is present, verify the format.
+			 * If the format is wrong return the user.
+			 */
+			list($token) = sscanf( $auth, 'Bearer %s' );
 
-		if ( ! $token ) {
-			return new WP_REST_Response(
-				array(
-					'success'    => false,
-					'statusCode' => 401,
-					'code'       => 'jwt_auth_bad_auth_header',
-					'message'    => $this->messages['jwt_auth_bad_auth_header'],
-					'data'       => array(),
-				),
-				401
-			);
+			if ( ! $token ) {
+				return new WP_REST_Response(
+					array(
+						'success'    => false,
+						'statusCode' => 401,
+						'code'       => 'jwt_auth_bad_auth_header',
+						'message'    => $this->messages['jwt_auth_bad_auth_header'],
+						'data'       => array(),
+					),
+					401
+				);
+			}
 		}
 
 		// Get the Secret Key.
@@ -535,8 +535,7 @@ class Auth {
 				401
 			);
 		}
-		$_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $_COOKIE['refresh_token'];
-		$payload = $this->validate_token( false );
+		$payload = $this->validate_token( isset( $_COOKIE['refresh_token'] ) ? $_COOKIE['refresh_token'] : '', false );
 
 		// If we receive a REST response, then validation failed.
 		if ( $payload instanceof WP_REST_Response ) {
@@ -589,7 +588,7 @@ class Auth {
 			return $user_id;
 		}
 
-		$payload = $this->validate_token( false );
+		$payload = $this->validate_token( '', false );
 
 		// If $payload is an error response, then return the default $user_id.
 		if ( $this->is_error_response( $payload ) ) {
