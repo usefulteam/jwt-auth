@@ -534,7 +534,7 @@ class Auth {
 			return false;
 		}
 
-		$request_uri = $_SERVER['REQUEST_URI'];
+		$request_uri    = $_SERVER['REQUEST_URI'];
 		$request_method = $_SERVER['REQUEST_METHOD'];
 
 		$prefix      = get_option( 'permalink_structure' ) ? rest_get_url_prefix() : '?rest_route=/';
@@ -551,12 +551,12 @@ class Auth {
 		$request_uri = untrailingslashit( $request_uri );
 
 		foreach ( $whitelist as $endpoint ) {
-			if( is_array( $endpoint ) ){
-				$method = $endpoint[ 'method' ];
-				$path = $endpoint[ 'path' ];
-			}else{
+			if ( is_array( $endpoint ) ) {
+				$method = $endpoint['method'];
+				$path   = $endpoint['path'];
+			} else {
 				$method = null;
-				$path = $endpoint;
+				$path   = $endpoint;
 			}
 			// If the endpoint doesn't contain * sign.
 			if ( false === stripos( $path, '*' ) ) {
