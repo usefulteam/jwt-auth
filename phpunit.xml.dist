@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+  bootstrap="vendor/autoload.php"
+  beStrictAboutTestsThatDoNotTestAnything="true"
+  beStrictAboutOutputDuringTests="true"
+  colors="true"
+  >
+    <testsuites>
+        <testsuite name="JWT Authentication Test Suite">
+            <directory suffix=".php">./tests/src</directory>
+        </testsuite>
+    </testsuites>
+
+    <!-- Filter for coverage reports. -->
+    <coverage>
+      <exclude>
+        <directory>./tests/fixtures</directory>
+        <directory>./vendor</directory>
+      </exclude>
+    </coverage>
+
+</phpunit>
