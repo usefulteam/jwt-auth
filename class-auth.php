@@ -193,7 +193,7 @@ class Auth {
 		$response = $this->generate_token( $user, false );
 
 		// Add the refresh token as a HttpOnly cookie to the response.
-		if ($username && $password) {
+		if ( $username && $password ) {
 			$this->send_refresh_token( $user );
 		}
 
@@ -296,7 +296,7 @@ class Auth {
 	/**
 	 * Sends a new refresh token.
 	 *
-	 * @param WP_User $user The WP_User object.
+	 * @param \WP_User $user The WP_User object.
 	 *
 	 * @return void
 	 */
@@ -304,8 +304,22 @@ class Auth {
 		$secret_key = defined( 'JWT_AUTH_SECRET_KEY' ) ? JWT_AUTH_SECRET_KEY : false;
 
 		$refresh_token = $this->generate_refresh_token( $user, true );
-		$payload = JWT::decode( $refresh_token, $secret_key, array( $this->get_alg() ) );
+		$payload       = JWT::decode( $refresh_token, $secret_key, array( $this->get_alg() ) );
 		setcookie( 'refresh_token', $refresh_token, $payload->exp, COOKIEPATH, COOKIE_DOMAIN, false, true );
+
+		// Save new refresh token for the user, replacing the previous one.
+		// If a device was passed in the request, the refresh token is exchanged for
+		// that device only, not affecting other devices.
+		$user_refresh_tokens = get_user_meta( $user->ID, 'jwt_auth_refresh_tokens', true );
+		if ( ! is_array( $user_refresh_tokens ) ) {
+			$user_refresh_tokens = array();
+		}
+		$device = isset( $_POST['device'] ) ? $_POST['device'] : '';
+		$user_refresh_tokens[ $device ] = array(
+			'token'   => $refresh_token,
+			'expires' => $payload->exp,
+		);
+		update_user_meta( $user->ID, 'jwt_auth_refresh_tokens', $user_refresh_tokens );
 	}
 
 	/**
@@ -345,8 +359,7 @@ class Auth {
 	}
 
 	/**
-	 * Main validation function, this function try to get the Autentication
-	 * headers and decoded.
+	 * Public token validation function based on Authorization header.
 	 *
 	 * @param bool $return_response Either to return full WP_REST_Response or to return the payload only.
 	 *
@@ -397,15 +410,14 @@ class Auth {
 			);
 		}
 
-		return $this->do_validate_token( $auth, $return_response );
+		return $this->do_validate_token( $token, $return_response );
 	}
 
 	/**
-	 * Main validation function, this function try to get the Autentication
-	 * headers and decoded.
+	 * Validates whether a token can be decoded and matches the issuer.
 	 *
 	 * @param string $token The token to validate.
-	 * @param bool $return_response Either to return full WP_REST_Response or to return the payload only.
+	 * @param bool   $return_response Either to return full WP_REST_Response or to return the payload only.
 	 *
 	 * @return WP_REST_Response | Array Returns WP_REST_Response or token's $payload.
 	 */
@@ -532,24 +544,45 @@ class Auth {
 	 *
 	 * @return WP_REST_Response Returns WP_REST_Response.
 	 */
-	public function refresh_token( $return_response = true ) {
-		if ( !isset( $_COOKIE['refresh_token'] ) || !empty( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
+	public function refresh_token() {
+		if ( ! isset( $_COOKIE['refresh_token'] ) || ! empty( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
 			return new WP_REST_Response(
 				array(
 					'success'    => false,
 					'statusCode' => 401,
 					'code'       => 'jwt_auth_no_auth_header',
 					'message'    => $this->messages['jwt_auth_no_auth_header'],
-					'data'       => array(),
 				),
 				401
 			);
 		}
-		$payload = $this->do_validate_token( $_COOKIE['refresh_token'] );
+		$refresh_token_cookie = $_COOKIE['refresh_token'];
+		$payload              = $this->do_validate_token( $refresh_token_cookie );
 
 		// If we receive a REST response, then validation failed.
 		if ( $payload instanceof WP_REST_Response ) {
 			return $payload;
+		}
+
+		// The refresh token must match the last issued token for the passed device.
+		$user_refresh_tokens = get_user_meta( $payload->data->user->id, 'jwt_auth_refresh_tokens', true );
+		$device              = isset( $_POST['device'] ) ? $_POST['device'] : '';
+		if ( ! is_array( $user_refresh_tokens ) ||
+			! isset( $user_refresh_tokens[ $device ] ) ||
+			$user_refresh_tokens[ $device ][ 'token' ] !== $refresh_token_cookie
+			) {
+			// If the user does not have saved tokens, something is bogus; the client
+			// has a valid refresh token but we did not store it; force the client to
+			// log in.
+			return new WP_REST_Response(
+				array(
+					'success'    => false,
+					'statusCode' => 401,
+					'code'       => 'jwt_auth_obsolete_token',
+					'message'    => __( 'Token is obsolete', 'jwt-auth' ),
+				),
+				401
+			);
 		}
 
 		// Generate a new access token.
@@ -561,7 +594,6 @@ class Auth {
 			'statusCode' => 200,
 			'code'       => 'jwt_auth_valid_token',
 			'message'    => __( 'Token is valid', 'jwt-auth' ),
-			'data'       => array(),
 		);
 		return new WP_REST_Response( $response );
 	}
