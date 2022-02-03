@@ -82,7 +82,7 @@ final class AccessTokenTest extends TestCase {
     $this->assertEquals(401, $response->getStatusCode());
     $body = json_decode($response->getBody()->getContents(), true);
     $this->assertEquals($body['success'], false);
-    $this->assertEquals($body['code'], 'jwt_auth_no_auth_header');
+    $this->assertEquals($body['code'], 'jwt_auth_no_auth_cookie');
 
     $cookies = [
       'refresh_token' => $token,
@@ -96,7 +96,7 @@ final class AccessTokenTest extends TestCase {
     $this->assertEquals(401, $response->getStatusCode());
     $body = json_decode($response->getBody()->getContents(), true);
     $this->assertEquals($body['success'], false);
-    $this->assertEquals($body['code'], 'jwt_auth_obsolete_token');
+    $this->assertEquals($body['code'], 'jwt_auth_invalid_refresh_token');
   }
 
   /**
@@ -114,10 +114,10 @@ final class AccessTokenTest extends TestCase {
     $response = $this->client->post('/wp-json/jwt-auth/v1/token', [
       'cookies' => $cookies,
     ]);
-    $this->assertEquals(401, $response->getStatusCode());
     $body = json_decode($response->getBody()->getContents(), true);
+    $this->assertEquals('jwt_auth_invalid_refresh_token', $body['code']);
+    $this->assertEquals(401, $response->getStatusCode());
     $this->assertEquals($body['success'], false);
-    $this->assertEquals($body['code'], 'jwt_auth_obsolete_token');
   }
 
 }

@@ -162,13 +162,14 @@ class Auth {
 		}
 
 		if ( isset( $_COOKIE['refresh_token'] ) ) {
-			$payload = $this->do_validate_token( $_COOKIE['refresh_token'] );
+			$device  = isset( $_POST['device'] ) ? $_POST['device'] : '';
+			$user_id = $this->validate_refresh_token( $_COOKIE['refresh_token'], $device );
 
 			// If we receive a REST response, then validation failed.
-			if ( $payload instanceof WP_REST_Response ) {
-				return $payload;
+			if ( $user_id instanceof WP_REST_Response ) {
+				return $user_id;
 			}
-			$user = get_user_by( 'id', $payload->data->user->id );
+			$user = get_user_by( 'id', $user_id );
 		} else {
 			$user = $this->authenticate_user( $username, $password, $custom_auth );
 		}
@@ -301,15 +302,16 @@ class Auth {
 	 * @return void
 	 */
 	public function send_refresh_token( \WP_User $user ) {
-		$secret_key = defined( 'JWT_AUTH_SECRET_KEY' ) ? JWT_AUTH_SECRET_KEY : false;
+		$refresh_token = bin2hex( random_bytes( 32 ) );
+		$created       = time();
+		$expires       = $created + DAY_IN_SECONDS * 30;
+		$expires       = apply_filters( 'jwt_auth_refresh_expire', $expires, $created );
 
-		$refresh_token = $this->generate_refresh_token( $user, true );
-		$payload       = JWT::decode( $refresh_token, $secret_key, array( $this->get_alg() ) );
-		setcookie( 'refresh_token', $refresh_token, $payload->exp, COOKIEPATH, COOKIE_DOMAIN, false, true );
+		setcookie( 'refresh_token', $user->ID . '.' . $refresh_token, $expires, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
 
 		// Save new refresh token for the user, replacing the previous one.
-		// If a device was passed in the request, the refresh token is exchanged for
-		// that device only, not affecting other devices.
+		// The refresh token is rotated for the passed device only, not affecting
+		// other devices.
 		$user_refresh_tokens = get_user_meta( $user->ID, 'jwt_auth_refresh_tokens', true );
 		if ( ! is_array( $user_refresh_tokens ) ) {
 			$user_refresh_tokens = array();
@@ -317,7 +319,7 @@ class Auth {
 		$device = isset( $_POST['device'] ) ? $_POST['device'] : '';
 		$user_refresh_tokens[ $device ] = array(
 			'token'   => $refresh_token,
-			'expires' => $payload->exp,
+			'expires' => $expires,
 		);
 		update_user_meta( $user->ID, 'jwt_auth_refresh_tokens', $user_refresh_tokens );
 	}
@@ -545,31 +547,65 @@ class Auth {
 	 * @return WP_REST_Response Returns WP_REST_Response.
 	 */
 	public function refresh_token() {
-		if ( ! isset( $_COOKIE['refresh_token'] ) || ! empty( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
+		if ( ! isset( $_COOKIE['refresh_token'] ) ) {
 			return new WP_REST_Response(
 				array(
 					'success'    => false,
 					'statusCode' => 401,
-					'code'       => 'jwt_auth_no_auth_header',
-					'message'    => $this->messages['jwt_auth_no_auth_header'],
+					'code'       => 'jwt_auth_no_auth_cookie',
+					'message'    => __( 'Refresh token cookie not found.', 'jwt-auth' ),
 				),
 				401
 			);
 		}
-		$refresh_token_cookie = $_COOKIE['refresh_token'];
-		$payload              = $this->do_validate_token( $refresh_token_cookie );
+		$device = isset( $_POST['device'] ) ? $_POST['device'] : '';
 
-		// If we receive a REST response, then validation failed.
-		if ( $payload instanceof WP_REST_Response ) {
-			return $payload;
+		$user_id = $this->validate_refresh_token( $_COOKIE['refresh_token'], $device );
+		if ( $user_id instanceof WP_REST_Response ) {
+			return $user_id;
+		}
+
+		// Generate a new access token.
+		$user = get_user_by( 'id', $user_id );
+		$this->send_refresh_token( $user );
+
+		$response = array(
+			'success'    => true,
+			'statusCode' => 200,
+			'code'       => 'jwt_auth_valid_token',
+			'message'    => __( 'Token is valid', 'jwt-auth' ),
+		);
+		return new WP_REST_Response( $response );
+	}
+
+	/**
+	 * Validates refresh token.
+	 *
+	 * @param string $refresh_token_cookie The refresh token to validate.
+	 * @param string $device The device of the refresh token.
+	 * @return int|WP_REST_Response Returns user ID if valid or WP_REST_Response on error.
+	 */
+	public function validate_refresh_token( $refresh_token_cookie, $device ) {
+		$parts = explode( '.', $refresh_token_cookie );
+		if ( count( $parts ) !== 2 || empty( intval( $parts[0] ) ) || empty( $parts[1] ) ) {
+			return new WP_REST_Response(
+				array(
+					'success'    => false,
+					'statusCode' => 401,
+					'code'       => 'jwt_auth_invalid_refresh_token',
+					'message'    => __( 'Invalid refresh token', 'jwt-auth' ),
+				),
+				401
+			);
 		}
 
 		// The refresh token must match the last issued token for the passed device.
-		$user_refresh_tokens = get_user_meta( $payload->data->user->id, 'jwt_auth_refresh_tokens', true );
-		$device              = isset( $_POST['device'] ) ? $_POST['device'] : '';
-		if ( ! is_array( $user_refresh_tokens ) ||
-			! isset( $user_refresh_tokens[ $device ] ) ||
-			$user_refresh_tokens[ $device ][ 'token' ] !== $refresh_token_cookie
+		$user_id             = intval( $parts[0] );
+		$user_refresh_tokens = get_user_meta( $user_id, 'jwt_auth_refresh_tokens', true );
+		$refresh_token       = $parts[1];
+
+		if ( empty( $user_refresh_tokens[ $device ] ) ||
+			$user_refresh_tokens[ $device ]['token'] !== $refresh_token
 			) {
 			// If the user does not have saved tokens, something is bogus; the client
 			// has a valid refresh token but we did not store it; force the client to
@@ -585,17 +621,7 @@ class Auth {
 			);
 		}
 
-		// Generate a new access token.
-		$user = get_user_by( 'id', $payload->data->user->id );
-		$this->send_refresh_token( $user );
-
-		$response = array(
-			'success'    => true,
-			'statusCode' => 200,
-			'code'       => 'jwt_auth_valid_token',
-			'message'    => __( 'Token is valid', 'jwt-auth' ),
-		);
-		return new WP_REST_Response( $response );
+		return $user_id;
 	}
 
 	/**

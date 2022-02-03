@@ -4,6 +4,7 @@ namespace UsefulTeam\Tests\JwtAuth;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Cookie\SetCookie;
 
 trait RestTestTrait {
 
@@ -16,7 +17,7 @@ trait RestTestTrait {
 
   protected function setUp(): void {
     $this->cookies = new CookieJar();
-    $this->client = new Client([
+    $options = [
       'base_uri' => 'http://front.bnn.local',
       'http_errors' => false,
       'cookies' => $this->cookies,
@@ -34,9 +35,23 @@ trait RestTestTrait {
       'curl' => [
         CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
       ],
-    ]);
+    ];
+    if (in_array('--debug', $_SERVER['argv'], true)) {
+      $options['debug'] = true;
+    }
+    $this->client = new Client($options);
     $this->username = '100100100';
     $this->password = 'asdlkj';
+  }
+
+  protected function setCookie($name, $value, $domain): CookieJar {
+    $this->cookies->setCookie(new SetCookie([
+        'Domain'  => $domain,
+        'Name'    => $name,
+        'Value'   => $value,
+        'Discard' => true,
+    ]));
+    return $this->cookies;
   }
 
 }
