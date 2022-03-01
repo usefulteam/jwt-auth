@@ -317,6 +317,7 @@ class Auth {
 			$user_refresh_tokens = array();
 		}
 		$device = isset( $_POST['device'] ) ? $_POST['device'] : '';
+		// @todo refresh_token as key. Add created + client IP.
 		$user_refresh_tokens[ $device ] = array(
 			'token'   => $refresh_token,
 			'expires' => $expires,
@@ -604,6 +605,7 @@ class Auth {
 		$user_refresh_tokens = get_user_meta( $user_id, 'jwt_auth_refresh_tokens', true );
 		$refresh_token       = $parts[1];
 
+		// @todo Validate expires
 		if ( empty( $user_refresh_tokens[ $device ] ) ||
 			$user_refresh_tokens[ $device ]['token'] !== $refresh_token
 			) {

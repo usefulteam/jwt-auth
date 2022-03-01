@@ -5,6 +5,9 @@ namespace UsefulTeam\Tests\JwtAuth;
 use GuzzleHttp\Cookie\CookieJar;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @small
+ */
 final class RefreshTokenTest extends TestCase {
 
   use RestTestTrait;
@@ -16,6 +19,7 @@ final class RefreshTokenTest extends TestCase {
         'password' => $this->password,
       ],
     ]);
+    // @todo Assert body.code first (debugging)
     $this->assertEquals(200, $response->getStatusCode());
     $body = json_decode($response->getBody()->getContents(), true);
     $this->assertEquals($body['success'], true);

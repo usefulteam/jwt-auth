@@ -5,6 +5,7 @@
   beStrictAboutOutputDuringTests="true"
   colors="true"
   >
+  <!-- @todo mark skipped tests failing -->
     <testsuites>
         <testsuite name="JWT Authentication Test Suite">
             <directory suffix=".php">./tests/src</directory>

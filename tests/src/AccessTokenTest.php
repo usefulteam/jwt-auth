@@ -18,6 +18,7 @@ final class AccessTokenTest extends TestCase {
     ]);
     $this->assertEquals(200, $response->getStatusCode());
     $body = json_decode($response->getBody()->getContents(), true);
+    // @todo assertEquals(mixed $expected, mixed $actual)
     $this->assertEquals($body['success'], true);
     $this->assertEquals($body['code'], 'jwt_auth_valid_credential');
 

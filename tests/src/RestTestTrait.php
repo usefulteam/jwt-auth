@@ -6,6 +6,16 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 
+/**
+ *
+ *
+ * Hint: You can use PHP shell execution operators to debug tests; e.g., to see
+ * the current refresh token used in the test and the refresh tokens stored for
+ * a certain user:
+ * ```
+ *   var_dump($refreshToken, `wp user meta get 87310 jwt_auth_refresh_tokens`);
+ * ```
+ */
 trait RestTestTrait {
 
   protected $client;
