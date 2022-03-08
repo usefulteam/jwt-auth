@@ -162,7 +162,7 @@ class Auth {
 		}
 
 		if ( isset( $_COOKIE['refresh_token'] ) ) {
-			$device  = isset( $_POST['device'] ) ? $_POST['device'] : '';
+			$device  = $request->get_param( 'device' ) ?: '';
 			$user_id = $this->validate_refresh_token( $_COOKIE['refresh_token'], $device );
 
 			// If we receive a REST response, then validation failed.
@@ -195,7 +195,7 @@ class Auth {
 
 		// Add the refresh token as a HttpOnly cookie to the response.
 		if ( $username && $password ) {
-			$this->send_refresh_token( $user );
+			$this->send_refresh_token( $user, $request );
 		}
 
 		return $response;
@@ -298,10 +298,11 @@ class Auth {
 	 * Sends a new refresh token.
 	 *
 	 * @param \WP_User $user The WP_User object.
+	 * @param \WP_REST_Request $request The request.
 	 *
 	 * @return void
 	 */
-	public function send_refresh_token( \WP_User $user ) {
+	public function send_refresh_token( \WP_User $user, \WP_REST_Request $request ) {
 		$refresh_token = bin2hex( random_bytes( 32 ) );
 		$created       = time();
 		$expires       = $created + DAY_IN_SECONDS * 30;
@@ -316,7 +317,7 @@ class Auth {
 		if ( ! is_array( $user_refresh_tokens ) ) {
 			$user_refresh_tokens = array();
 		}
-		$device = isset( $_POST['device'] ) ? $_POST['device'] : '';
+		$device = $request->get_param( 'device' ) ?: '';
 		// @todo refresh_token as key. Add created + client IP.
 		$user_refresh_tokens[ $device ] = array(
 			'token'   => $refresh_token,
@@ -545,9 +546,10 @@ class Auth {
 	/**
 	 * Validates refresh token and generates a new refresh token.
 	 *
+	 * @param WP_REST_Request $request The request.
 	 * @return WP_REST_Response Returns WP_REST_Response.
 	 */
-	public function refresh_token() {
+	public function refresh_token( WP_REST_Request $request ) {
 		if ( ! isset( $_COOKIE['refresh_token'] ) ) {
 			return new WP_REST_Response(
 				array(
@@ -559,7 +561,7 @@ class Auth {
 				401
 			);
 		}
-		$device = isset( $_POST['device'] ) ? $_POST['device'] : '';
+		$device = $request->get_param( 'device' ) ?: '';
 
 		$user_id = $this->validate_refresh_token( $_COOKIE['refresh_token'], $device );
 		if ( $user_id instanceof WP_REST_Response ) {
@@ -568,7 +570,7 @@ class Auth {
 
 		// Generate a new access token.
 		$user = get_user_by( 'id', $user_id );
-		$this->send_refresh_token( $user );
+		$this->send_refresh_token( $user, $request );
 
 		$response = array(
 			'success'    => true,
