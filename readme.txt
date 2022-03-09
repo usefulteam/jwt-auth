@@ -709,6 +709,7 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 == Changelog ==
 = 3.0.0 =
 - New feature: Added support for refresh tokens.
+- New feature: Added automated end-to-end tests using PHPUnit.
 - Breaking change: Reduced default access token lifetime to 10 minutes.
 - Breaking bugfix: All authentication error responses are using the correct HTTP status code 401 (Unauthorized) instead of 403 (Forbidden) now.
 
