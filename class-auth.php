@@ -210,28 +210,12 @@ class Auth {
 	 * @return WP_REST_Response|string Return as raw token string or as a formatted WP_REST_Response.
 	 */
 	public function generate_token( $user, $return_raw = true ) {
+		$secret_key = defined( 'JWT_AUTH_SECRET_KEY' ) ? JWT_AUTH_SECRET_KEY : false;
 		$issued_at  = time();
 		$not_before = $issued_at;
 		$not_before = apply_filters( 'jwt_auth_not_before', $not_before, $issued_at );
 		$expire     = $issued_at + ( MINUTE_IN_SECONDS * 10 );
 		$expire     = apply_filters( 'jwt_auth_expire', $expire, $issued_at );
-
-		return $this->do_generate_token( $issued_at, $not_before, $expire, $user, $return_raw );
-	}
-
-	/**
-	 * Generate token
-	 *
-	 * @param int     $issued_at Unix timestamp of when the token was generated.
-	 * @param int     $not_before Unix timestamp of when the token becomes valid.
-	 * @param int     $expire Unix timestamp of when the token expires.
-	 * @param WP_User $user The WP_User object.
-	 * @param bool    $return_raw Whether or not to return as raw token string.
-	 *
-	 * @return WP_REST_Response|string Return as raw token string or as a formatted WP_REST_Response.
-	 */
-	private function do_generate_token( $issued_at, $not_before, $expire, $user, $return_raw = true ) {
-		$secret_key = defined( 'JWT_AUTH_SECRET_KEY' ) ? JWT_AUTH_SECRET_KEY : false;
 
 		$payload = array(
 			'iss'  => $this->get_iss(),
@@ -404,18 +388,6 @@ class Auth {
 			);
 		}
 
-		return $this->do_validate_token( $token, $return_response );
-	}
-
-	/**
-	 * Validates whether a token can be decoded and matches the issuer.
-	 *
-	 * @param string $token The token to validate.
-	 * @param bool   $return_response Either to return full WP_REST_Response or to return the payload only.
-	 *
-	 * @return WP_REST_Response | Array Returns WP_REST_Response or token's $payload.
-	 */
-	public function do_validate_token( $token, $return_response = false ) {
 		// Get the Secret Key.
 		$secret_key = defined( 'JWT_AUTH_SECRET_KEY' ) ? JWT_AUTH_SECRET_KEY : false;
 
