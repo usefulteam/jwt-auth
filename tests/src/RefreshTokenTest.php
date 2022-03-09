@@ -222,7 +222,7 @@ final class RefreshTokenTest extends TestCase {
     $this->assertEquals(401, $response->getStatusCode());
     $body = json_decode($response->getBody()->getContents(), true);
     $this->assertEquals($body['success'], false);
-    $this->assertEquals($body['code'], 'jwt_auth_invalid_token');
+    $this->assertEquals($body['code'], 'jwt_auth_no_auth_cookie');
 
     $cookies = [
       'refresh_token' => $refreshToken,
