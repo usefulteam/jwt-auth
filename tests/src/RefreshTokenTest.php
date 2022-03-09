@@ -208,6 +208,97 @@ final class RefreshTokenTest extends TestCase {
     $this->assertEquals($body['code'], 'jwt_auth_obsolete_token');
   }
 
+  public function testTokenRefreshRotationByDevice() {
+    $domain = $this->client->getConfig('base_uri')->getHost();
+
+    $devices = [
+      1 => [
+        'device' => 'device1',
+      ],
+      2 => [
+        'device' => 'device2',
+      ],
+    ];
+
+    $this->cookies->clear();
+
+    // Authenticate with each device.
+    for ($i = 1; $i <= count($devices); $i++) {
+      $response = $this->client->post('/wp-json/jwt-auth/v1/token', [
+        'form_params' => [
+          'username' => $this->username,
+          'password' => $this->password,
+          'device' => $devices[$i]['device'],
+        ],
+      ]);
+      $body = json_decode($response->getBody()->getContents(), true);
+      $this->assertEquals($body['code'], 'jwt_auth_valid_credential');
+      $cookie = $this->cookies->getCookieByName('refresh_token');
+      $devices[$i]['refresh_token'] = $cookie->getValue();
+      $this->assertNotEmpty($devices[$i]['refresh_token']);
+
+      if (isset($devices[$i - 1]['refresh_token'])) {
+        $this->assertNotEquals($devices[$i - 1]['refresh_token'], $devices[$i]['refresh_token']);
+      }
+
+      $this->cookies->clear();
+    }
+
+    // Refresh token with each device.
+    for ($i = 1; $i <= count($devices); $i++) {
+      $initial_refresh_token = $devices[$i]['refresh_token'];
+
+      $this->setCookie('refresh_token', $devices[$i]['refresh_token'], $domain);
+      $response = $this->client->post('/wp-json/jwt-auth/v1/token/refresh', [
+        'form_params' => [
+          'device' => $devices[$i]['device'],
+        ],
+      ]);
+      $body = json_decode($response->getBody()->getContents(), true);
+      $this->assertEquals($body['code'], 'jwt_auth_valid_token');
+
+      // Discard the refresh_token cookie we set above to only retain the
+      // refresh_token cookie from the response.
+      $this->cookies->clearSessionCookies();
+      $cookie = $this->cookies->getCookieByName('refresh_token');
+      $devices[$i]['refresh_token'] = $cookie->getValue();
+      $this->assertNotEmpty($devices[$i]['refresh_token']);
+
+      $this->assertNotEquals($initial_refresh_token, $devices[$i]['refresh_token']);
+      if (isset($devices[$i - 1]['refresh_token'])) {
+        $this->assertNotEquals($devices[$i - 1]['refresh_token'], $devices[$i]['refresh_token']);
+      }
+
+      $this->cookies->clear();
+    }
+
+    // Confirm each device can use its refresh token to authenticate.
+    for ($i = 1; $i <= count($devices); $i++) {
+      $this->setCookie('refresh_token', $devices[$i]['refresh_token'], $domain);
+      $response = $this->client->post('/wp-json/jwt-auth/v1/token', [
+        'form_params' => [
+          'device' => $devices[$i]['device'],
+        ],
+      ]);
+      $body = json_decode($response->getBody()->getContents(), true);
+      $this->assertEquals($body['code'], 'jwt_auth_valid_credential');
+      $this->assertArrayHasKey('token', $body['data']);
+
+      $this->cookies->clear();
+    }
+
+    // Confirm the previous refresh token is no longer valid.
+    $this->setCookie('refresh_token', $initial_refresh_token, $domain);
+    $response = $this->client->post('/wp-json/jwt-auth/v1/token', [
+      'form_params' => [
+        'device' => $devices[count($devices)]['device'],
+      ],
+    ]);
+    $this->assertEquals(401, $response->getStatusCode());
+    $body = json_decode($response->getBody()->getContents(), true);
+    $this->assertEquals($body['code'], 'jwt_auth_obsolete_token');
+  }
+
   /**
    * @depends testToken
    */
