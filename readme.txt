@@ -1,6 +1,6 @@
 === JWT Auth - WordPress JSON Web Token Authentication ===
 
-Contributors: contactjavas
+Contributors: contactjavas, tha_sun
 Donate link: https://www.paypal.me/bagusjavas
 Tags: jwt, jwt-auth, token-authentication, json-web-token
 Requires at least: 5.2

@@ -496,39 +496,6 @@ add_filter(
 );
 ```
 
-### jwt_auth_refresh_not_before
-
-The `jwt_auth_refresh_not_before` filter hook allows you to change the [**nbf**](https://tools.ietf.org/html/rfc7519#section-4.1.5) value before the payload of the refresh token is encoded.
-
-Default Value:
-
-```
-// Creation time.
-time()
-```
-
-Usage example:
-
-```php
-/**
- * Change the refresh token's nbf value.
- *
- * @param int $not_before The default "nbf" value in timestamp.
- * @param int $issued_at The "iat" value in timestamp.
- *
- * @return int The "nbf" value.
- */
-add_filter(
-	'jwt_auth_refresh_not_before',
-	function ( $not_before, $issued_at ) {
-		// Modify the "not_before" here.
-		return $not_before;
-	},
-	10,
-	2
-);
-```
-
 ### jwt_auth_refresh_expire
 
 The `jwt_auth_refresh_expire` filter hook allows you to change the [**exp**](https://tools.ietf.org/html/rfc7519#section-4.1.4) value before the payload of the refresh token is encoded.

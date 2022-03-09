@@ -220,24 +220,6 @@ class Auth {
 	}
 
 	/**
-	 * Generate refresh token.
-	 *
-	 * @param WP_User $user The WP_User object.
-	 * @param bool    $return_raw Whether or not to return as raw token string.
-	 *
-	 * @return WP_REST_Response|string Return as raw token string or as a formatted WP_REST_Response.
-	 */
-	public function generate_refresh_token( $user, $return_raw = true ) {
-		$issued_at  = time();
-		$not_before = $issued_at;
-		$not_before = apply_filters( 'jwt_auth_refresh_not_before', $not_before, $issued_at );
-		$expire     = $issued_at + ( DAY_IN_SECONDS * 30 );
-		$expire     = apply_filters( 'jwt_auth_refresh_expire', $expire, $issued_at );
-
-		return $this->do_generate_token( $issued_at, $not_before, $expire, $user, $return_raw );
-	}
-
-	/**
 	 * Generate token
 	 *
 	 * @param int     $issued_at Unix timestamp of when the token was generated.
@@ -610,18 +592,16 @@ class Auth {
 			);
 		}
 
-		// The refresh token must match the last issued token for the passed device.
+		// The refresh token must match the last issued refresh token for the passed
+		// device.
 		$user_id             = intval( $parts[0] );
 		$user_refresh_tokens = get_user_meta( $user_id, 'jwt_auth_refresh_tokens', true );
 		$refresh_token       = $parts[1];
 
-		// @todo Validate expires
 		if ( empty( $user_refresh_tokens[ $device ] ) ||
-			$user_refresh_tokens[ $device ]['token'] !== $refresh_token
+			$user_refresh_tokens[ $device ]['token'] !== $refresh_token ||
+			$user_refresh_tokens[ $device ]['expires'] < time()
 			) {
-			// If the user does not have saved tokens, something is bogus; the client
-			// has a valid refresh token but we did not store it; force the client to
-			// log in.
 			return new WP_REST_Response(
 				array(
 					'success'    => false,
