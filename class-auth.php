@@ -686,7 +686,8 @@ class Auth {
 			return false;
 		}
 
-		$request_uri = $_SERVER['REQUEST_URI'];
+		$request_uri    = $_SERVER['REQUEST_URI'];
+		$request_method = $_SERVER['REQUEST_METHOD'];
 
 		$prefix      = get_option( 'permalink_structure' ) ? rest_get_url_prefix() : '?rest_route=/';
 		$split       = explode( $prefix, $request_uri );
@@ -702,17 +703,24 @@ class Auth {
 		$request_uri = untrailingslashit( $request_uri );
 
 		foreach ( $whitelist as $endpoint ) {
+			if ( is_array( $endpoint ) ) {
+				$method = $endpoint['method'];
+				$path   = $endpoint['path'];
+			} else {
+				$method = null;
+				$path   = $endpoint;
+			}
 			// If the endpoint doesn't contain * sign.
-			if ( false === stripos( $endpoint, '*' ) ) {
-				$endpoint = untrailingslashit( $endpoint );
+			if ( false === stripos( $path, '*' ) ) {
+				$path = untrailingslashit( $path );
 
-				if ( $endpoint === $request_uri ) {
+				if ( $path === $request_uri && ( ! isset( $method ) || $method === $request_method ) ) {
 					return true;
 				}
 			} else {
-				$regex = '/' . str_replace( '/', '\/', $endpoint ) . '/';
+				$regex = '/' . str_replace( '/', '\/', $path ) . '/';
 
-				if ( preg_match( $regex, $request_uri ) ) {
+				if ( preg_match( $regex, $request_uri ) && ( ! isset( $method ) || $method === $request_method ) ) {
 					return true;
 				}
 			}
