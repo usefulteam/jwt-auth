@@ -318,12 +318,20 @@ class Auth {
 			$user_refresh_tokens = array();
 		}
 		$device = $request->get_param( 'device' ) ?: '';
-		// @todo refresh_token as key. Add created + client IP.
 		$user_refresh_tokens[ $device ] = array(
 			'token'   => $refresh_token,
 			'expires' => $expires,
 		);
 		update_user_meta( $user->ID, 'jwt_auth_refresh_tokens', $user_refresh_tokens );
+
+		// Store next expiry for cron_purge_expired_refresh_tokens event.
+		$expires_next = $expires;
+		foreach ( $user_refresh_tokens as $device ) {
+			if ( $device['expires'] < $expires_next ) {
+				$expires_next = $device['expires'];
+			}
+		}
+		update_user_meta( $user->ID, 'jwt_auth_refresh_tokens_expires_next', $expires_next );
 	}
 
 	/**
