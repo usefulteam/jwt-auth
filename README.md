@@ -87,7 +87,7 @@ When the plugin is activated, a new namespace is added.
 /jwt-auth/v1
 ```
 
-Also, two new endpoints are added to this namespace.
+Also, three new endpoints are added to this namespace.
 
 | Endpoint                              | HTTP Verb |
 | ------------------------------------- | --------- |
