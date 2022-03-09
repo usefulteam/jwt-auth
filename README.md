@@ -543,12 +543,12 @@ Usage example:
 
 ```php
 /**
- * Change the refresh token's expire value.
+ * Change the refresh token's expiration time.
  *
- * @param int $expire The default "exp" value in timestamp.
- * @param int $issued_at The "iat" value in timestamp.
+ * @param int $expire The default expiration timestamp.
+ * @param int $issued_at The current time.
  *
- * @return int The "nbf" value.
+ * @return int The custom refresh token expiration timestamp.
  */
 add_filter(
 	'jwt_auth_refresh_expire',
