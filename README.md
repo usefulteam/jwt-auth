@@ -120,8 +120,7 @@ You can use the optional parameter `device` with the device identifier to let us
 		"nicename": "contactjavas",
 		"firstName": "Bagus Javas",
 		"lastName": "Heruyanto",
-		"displayName": "contactjavas",
-		"refreshToken": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvc2VydmljZS50ZXN0LmJubi5kZSIsImlhdCI6MTYyNDQ1NzA2MSwibmJmIjoxNjI0NDU3MDYxLCJleHAiOjE2MjcwNDkwNjEsImRhdGEiOnsidXNlciI6eyJpZCI6NTA1NjUsImRldmljZSI6IiIsInBhc3MiOiJkZGU1YThlM2ZmYjQ2ZTBiNzY4OWI5M2QwNzk0MTk5OCJ9fX0.UNlvDB2p601BNXDa-OBtt5jnXjttx0bL7VhHDyud8-E"
+		"displayName": "contactjavas"
 	}
 }
 ```
@@ -231,11 +230,45 @@ But if you want to test or validate the token manually, then send a **POST** req
 
 For security reasons, third-party applications that are integrating with your authentication server will not store the user's username and password. Instead they will store the refresh token in a user-specific storage that is only accessible for the user. The refresh token can be used to re-authenticate as the same user and generate a new access token.
 
-To generate a new access token, send the refresh token in the HTTP **POST** header _Authorization: Bearer_:
+When authenticating with `username` and `password` as the parameters to `/wp-json/jwt-auth/v1/token`, a refresh token is sent as a cookie in the response.
+
+`/wp-json/jwt-auth/v1/token`
+
+To generate new access token using the refresh token, submit a POST request to the token endpoint together with the `refresh_token` cookie.
+
+Use the optional parameter `device` with the device identifier to associate the token with that device.
+
+If the refresh token is valid, then you receive a new access token in the response.
+
+By default, each access token expires after 10 minutes.
+
 
 `/wp-json/jwt-auth/v1/token/refresh`
 
-The response is the same as for the `/token` response - only without a new `refreshToken`.
+To generate new refresh token using the refresh token, submit a POST request to the token refresh endpoint together with the `refresh_token` cookie.
+
+Use the optional parameter `device` with the device identifier to associate the refresh token with that device.
+
+If the refresh token is valid, then you receive a new refresh token as a cookie in the response.
+
+By default, each refresh token expires after 30 days.
+
+
+### Refresh Token Rotation
+
+Whenever you are authenticating afresh or refreshing the refresh token, only the last issued refresh token remains valid. All previously issued refresh tokens can no longer be used.
+
+This means that a refresh token cannot be shared. To allow multiple devices to authenticate in parallel without losing access after another device re-authenticated, use the parameter `device` with the device identifier to associate the refresh token only with that device.
+
+```sh
+curl -F device="abc-def" -F username=myuser -F password=mypass /wp-json/jwt-auth/v1/token
+```
+```sh
+curl -F device="abc-def" -b "refresh_token=123.abcdef..." /wp-json/jwt-auth/v1/token
+```
+```sh
+curl -F device="abc-def" -b "refresh_token=123.abcdef..." /wp-json/jwt-auth/v1/token/refresh
+```
 
 
 ## Error Responses
