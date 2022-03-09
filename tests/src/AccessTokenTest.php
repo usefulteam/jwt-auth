@@ -18,9 +18,8 @@ final class AccessTokenTest extends TestCase {
     ]);
     $this->assertEquals(200, $response->getStatusCode());
     $body = json_decode($response->getBody()->getContents(), true);
-    // @todo assertEquals(mixed $expected, mixed $actual)
-    $this->assertEquals($body['success'], true);
-    $this->assertEquals($body['code'], 'jwt_auth_valid_credential');
+    $this->assertEquals(true, $body['success']);
+    $this->assertEquals('jwt_auth_valid_credential', $body['code']);
 
     $this->assertArrayHasKey('data', $body);
     $this->assertArrayHasKey('token', $body['data']);
@@ -48,8 +47,8 @@ final class AccessTokenTest extends TestCase {
     ]);
     $this->assertEquals(200, $response->getStatusCode());
     $body = json_decode($response->getBody()->getContents(), true);
-    $this->assertEquals($body['success'], true);
-    $this->assertEquals($body['code'], 'jwt_auth_valid_token');
+    $this->assertEquals(true, $body['success']);
+    $this->assertEquals('jwt_auth_valid_token', $body['code']);
   }
 
   /**
@@ -65,8 +64,8 @@ final class AccessTokenTest extends TestCase {
     ]);
     $this->assertEquals(401, $response->getStatusCode());
     $body = json_decode($response->getBody()->getContents(), true);
-    $this->assertEquals($body['success'], false);
-    $this->assertEquals($body['code'], 'jwt_auth_invalid_token');
+    $this->assertEquals(false, $body['success']);
+    $this->assertEquals('jwt_auth_invalid_token', $body['code']);
   }
 
   /**
@@ -82,8 +81,8 @@ final class AccessTokenTest extends TestCase {
     ]);
     $this->assertEquals(401, $response->getStatusCode());
     $body = json_decode($response->getBody()->getContents(), true);
-    $this->assertEquals($body['success'], false);
-    $this->assertEquals($body['code'], 'jwt_auth_no_auth_cookie');
+    $this->assertEquals(false, $body['success']);
+    $this->assertEquals('jwt_auth_no_auth_cookie', $body['code']);
 
     $cookies = [
       'refresh_token' => $token,
@@ -96,8 +95,8 @@ final class AccessTokenTest extends TestCase {
     ]);
     $this->assertEquals(401, $response->getStatusCode());
     $body = json_decode($response->getBody()->getContents(), true);
-    $this->assertEquals($body['success'], false);
-    $this->assertEquals($body['code'], 'jwt_auth_invalid_refresh_token');
+    $this->assertEquals(false, $body['success']);
+    $this->assertEquals('jwt_auth_invalid_refresh_token', $body['code']);
   }
 
   /**
@@ -118,7 +117,7 @@ final class AccessTokenTest extends TestCase {
     $body = json_decode($response->getBody()->getContents(), true);
     $this->assertEquals('jwt_auth_invalid_refresh_token', $body['code']);
     $this->assertEquals(401, $response->getStatusCode());
-    $this->assertEquals($body['success'], false);
+    $this->assertEquals(false, $body['success']);
   }
 
 }
