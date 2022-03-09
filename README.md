@@ -531,7 +531,7 @@ add_filter(
 
 ### jwt_auth_refresh_expire
 
-The `jwt_auth_refresh_expire` filter hook allows you to change the [**exp**](https://tools.ietf.org/html/rfc7519#section-4.1.4) value before the payload of the refresh token is encoded.
+The `jwt_auth_refresh_expire` filter hook allows you to change the expiration date of the refresh token.
 
 Default Value:
 
