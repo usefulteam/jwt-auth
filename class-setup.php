@@ -72,8 +72,7 @@ class Setup {
 				foreach ( $user_refresh_tokens as $key => $device ) {
 					if ( $device['expires'] <= $now ) {
 						unset( $user_refresh_tokens[ $key ] );
-					}
-					elseif ( $expires_next === 0 || $device['expires'] <= $expires_next ) {
+					} elseif ( $expires_next === 0 || $device['expires'] <= $expires_next ) {
 						$expires_next = $device['expires'];
 					}
 				}
@@ -81,8 +80,7 @@ class Setup {
 				if ( $user_refresh_tokens ) {
 					update_user_meta( $user_id, 'jwt_auth_refresh_tokens', $user_refresh_tokens );
 					update_user_meta( $user_id, 'jwt_auth_refresh_tokens_expires_next', $expires_next );
-				}
-				else {
+				} else {
 					delete_user_meta(  $user_id, 'jwt_auth_refresh_tokens' );
 					delete_user_meta(  $user_id, 'jwt_auth_refresh_tokens_expires_next' );
 				}
