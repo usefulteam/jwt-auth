@@ -756,6 +756,23 @@ add_filter(
 ```
 
 
+## Automated Tests
+
+There are end-to-end tests you can run to confirm that the API works correctly:
+
+```console
+$ URL=https://example.local USERNAME=myuser PASSWORD=mypass composer run test
+> ./vendor/bin/phpunit
+PHPUnit 9.5.13 by Sebastian Bergmann and contributors.
+
+.............                                                     13 / 13 (100%)
+
+Time: 00:12.377, Memory: 6.00 MB
+
+OK (13 tests, 110 assertions)
+```
+
+
 ## Credits
 
 - [PHP-JWT from firebase](https://github.com/firebase/php-jwt)

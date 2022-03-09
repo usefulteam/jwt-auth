@@ -11,6 +11,12 @@
         </testsuite>
     </testsuites>
 
+    <php>
+      <env name="URL" value="http://localhost" />
+      <env name="USERNAME" value="admin" />
+      <env name="PASSWORD" value="password" />
+    </php>
+
     <!-- Filter for coverage reports. -->
     <coverage>
       <exclude>

@@ -7,7 +7,7 @@ use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Cookie\SetCookie;
 
 /**
- *
+ * Shared methods for REST end-to-end tests.
  *
  * Hint: You can use PHP shell execution operators to debug tests; e.g., to see
  * the current refresh token used in the test and the refresh tokens stored for
@@ -28,7 +28,7 @@ trait RestTestTrait {
   protected function setUp(): void {
     $this->cookies = new CookieJar();
     $options = [
-      'base_uri' => 'http://front.bnn.local',
+      'base_uri' => $_ENV['URL'],
       'http_errors' => false,
       'cookies' => $this->cookies,
       // PHP's cURL library attempts to resolve domains with IPv6, causing a
@@ -50,8 +50,8 @@ trait RestTestTrait {
       $options['debug'] = true;
     }
     $this->client = new Client($options);
-    $this->username = '100100100';
-    $this->password = 'asdlkj';
+    $this->username = $_ENV['USERNAME'];
+    $this->password = $_ENV['PASSWORD'];
   }
 
   protected function setCookie($name, $value, $domain): CookieJar {
