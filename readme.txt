@@ -707,6 +707,11 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 3. Other error responses
 
 == Changelog ==
+= 3.0.0 =
+- New feature: Added support for refresh tokens.
+- Breaking change: Reduced default access token lifetime to 10 minutes.
+- Breaking bugfix: All authentication error responses are using the correct HTTP status code 401 (Unauthorized) instead of 403 (Forbidden) now.
+
 = 2.0.0 =
 - Breaking change: rename `jwt_auth_valid_token_extra` filter to `jwt_auth_extra_token_check`. Please check if you use this filter.
 - Breaking bugfix: the actual http statusCode didn't follow the response statusCode. Now the actual http statusCode follows the response statusCode.
