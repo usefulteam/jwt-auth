@@ -29,4 +29,4 @@ require __DIR__ . '/class-auth.php';
 require __DIR__ . '/class-setup.php';
 require __DIR__ . '/class-devices.php';
 
-new JWTAuth\Setup();
+JWTAuth\Setup::getInstance();
