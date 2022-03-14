@@ -622,7 +622,10 @@ class Auth {
 
 		$payload = $this->validate_token( false );
 
-		// If $payload is an error response, authentication failed.
+		// If $payload is an error response, then the client did not send a token,
+		// or the token is invalid, the client uses a different way to authenticate,
+		// or the endpoint does not require authentication.
+		// Let the endpoint do its regular access checks.
 		if ( $this->is_error_response( $payload ) ) {
 			return $user_id;
 		}
