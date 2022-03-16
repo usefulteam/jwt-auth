@@ -7,10 +7,28 @@
         {
             "name": "Bagus",
             "email": "25834188+contactjavas@users.noreply.github.com"
+        },
+        {
+            "name": "Daniel Kudwien",
+            "email": "sun@makers99.com"
         }
     ],
     "minimum-stability": "stable",
     "require": {
         "firebase/php-jwt": "^5.2"
+    },
+    "require-dev": {
+        "php": ">=7.4",
+        "phpunit/phpunit": "^9.5",
+        "guzzlehttp/guzzle": "^7.4"
+    },
+    "scripts": {
+        "test": "./vendor/bin/phpunit"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "UsefulTeam\\Tests\\JwtAuth\\": "tests/src/",
+            "UsefulTeam\\Tests\\JwtAuth\\Fixtures\\": "tests/fixtures/"
+        }
     }
 }

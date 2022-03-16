@@ -1,6 +1,6 @@
 === JWT Auth - WordPress JSON Web Token Authentication ===
 
-Contributors: contactjavas
+Contributors: contactjavas, tha_sun
 Donate link: https://www.paypal.me/bagusjavas
 Tags: jwt, jwt-auth, token-authentication, json-web-token
 Requires at least: 5.2
@@ -73,11 +73,12 @@ When the plugin is activated, a new namespace is added.
 /jwt-auth/v1
 `
 
-Also, two new *POST* endpoints are added to this namespace.
+Also, three new *POST* endpoints are added to this namespace.
 
 `
 /wp-json/jwt-auth/v1/token
 /wp-json/jwt-auth/v1/token/validate
+/wp-json/jwt-auth/v1/token/refresh
 `
 
 ## Requesting/ Generating Token
@@ -89,6 +90,8 @@ Also, two new *POST* endpoints are added to this namespace.
 To generate token, submit a POST request to this endpoint. With `username` and `password` as the parameters.
 
 It will validates the user credentials, and returns success response including a token if the authentication is correct or returns an error response if the authentication is failed.
+
+You can use the optional parameter `device` with the device identifier to let user manage the device access in your profile. If this parameter is empty, it is ignored.
 
 = Sample of success response when trying to generate token: =
 
@@ -212,6 +215,51 @@ But if you want to test or validate the token manually, then send a **POST** req
 }
 `
 
+## Refreshing the Access Token
+
+For security reasons, third-party applications that are integrating with your authentication server will not store the user's username and password. Instead they will store the refresh token in a user-specific storage that is only accessible for the user. The refresh token can be used to re-authenticate as the same user and generate a new access token.
+
+When authenticating with `username` and `password` as the parameters to `/wp-json/jwt-auth/v1/token`, a refresh token is sent as a cookie in the response.
+
+`/wp-json/jwt-auth/v1/token`
+
+To generate new access token using the refresh token, submit a POST request to the token endpoint together with the `refresh_token` cookie.
+
+Use the optional parameter `device` with the device identifier to associate the token with that device.
+
+If the refresh token is valid, then you receive a new access token in the response.
+
+By default, each access token expires after 10 minutes.
+
+
+`/wp-json/jwt-auth/v1/token/refresh`
+
+To generate new refresh token using the refresh token, submit a POST request to the token refresh endpoint together with the `refresh_token` cookie.
+
+Use the optional parameter `device` with the device identifier to associate the refresh token with that device.
+
+If the refresh token is valid, then you receive a new refresh token as a cookie in the response.
+
+By default, each refresh token expires after 30 days.
+
+
+= Refresh Token Rotation =
+
+Whenever you are authenticating afresh or refreshing the refresh token, only the last issued refresh token remains valid. All previously issued refresh tokens can no longer be used.
+
+This means that a refresh token cannot be shared. To allow multiple devices to authenticate in parallel without losing access after another device re-authenticated, use the parameter `device` with the device identifier to associate the refresh token only with that device.
+
+`
+curl -F device="abc-def" -F username=myuser -F password=mypass /wp-json/jwt-auth/v1/token
+`
+`
+curl -F device="abc-def" -b "refresh_token=123.abcdef..." /wp-json/jwt-auth/v1/token
+`
+`
+curl -F device="abc-def" -b "refresh_token=123.abcdef..." /wp-json/jwt-auth/v1/token/refresh
+`
+
+
 ## Errors
 
 If the token is invalid an error will be returned. Here are some samples of errors:
@@ -264,7 +312,7 @@ If the token is invalid an error will be returned. Here are some samples of erro
 }
 `
 
-= Bad Request =
+= Incomplete Payload =
 
 `
 {
@@ -296,6 +344,18 @@ If the token is invalid an error will be returned. Here are some samples of erro
 	"statusCode": 403,
 	"code": "jwt_auth_invalid_token",
 	"message": "Expired token",
+	"data": []
+}
+`
+
+= Obsolete Token =
+
+`
+{
+	"success": false,
+	"statusCode": 403,
+	"code": "jwt_auth_obsolete_token",
+	"message": "Token is obsolete",
 	"data": []
 }
 `
@@ -416,6 +476,38 @@ Usage example:
  */
 add_filter(
 	'jwt_auth_expire',
+	function ( $expire, $issued_at ) {
+		// Modify the "expire" here.
+		return $expire;
+	},
+	10,
+	2
+);
+`
+
+= jwt_auth_refresh_expire =
+
+The `jwt_auth_refresh_expire` filter hook allows you to change the expiration date of the refresh token.
+
+Default Value:
+
+`
+time() + (DAY_IN_SECONDS * 30)
+`
+
+Usage example:
+
+`
+/**
+ * Change the refresh token's expiration time.
+ *
+ * @param int $expire The default expiration timestamp.
+ * @param int $issued_at The current time.
+ *
+ * @return int The custom refresh token expiration timestamp.
+ */
+add_filter(
+	'jwt_auth_refresh_expire',
 	function ( $expire, $issued_at ) {
 		// Modify the "expire" here.
 		return $expire;
@@ -622,6 +714,7 @@ add_filter(
 [PHP-JWT from firebase](https://github.com/firebase/php-jwt)
 [JWT Authentication for WP REST API](https://wordpress.org/plugins/jwt-authentication-for-wp-rest-api/)
 [Devices utility by pesseba](https://github.com/pesseba)
+The [awesome maintainers](https://github.com/usefulteam/jwt-auth/collaborators) and [contributors](https://github.com/usefulteam/jwt-auth/graphs/contributors)
 
 == Installation ==
 
@@ -699,7 +792,6 @@ You can visit the GitHub repository [here](https://github.com/usefulteam/jwt-aut
 
 You can help this plugin stay alive and maintained by giving **5 Stars** Rating/ Review or donating me via:
 - [PayPal](https://paypal.me/bagusjavas)
-- [Patreon](https://www.patreon.com/bagus)
 
 == Screenshots ==
 1. Success response when trying to generate token
@@ -707,6 +799,15 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 3. Other error responses
 
 == Changelog ==
+= 3.0.0 =
+- New feature: Added support for refresh tokens.
+- New feature: Added automated end-to-end tests using PHPUnit.
+- Breaking change: Reduced default access token lifetime to 10 minutes.
+- Breaking bugfix: All authentication error responses are using the correct HTTP status code 401 (Unauthorized) instead of 403 (Forbidden) now.
+
+= 2.1.0 =
+- It's possible now to whitelist an endpoint with specific method (GET/POST). See [PR #47](https://github.com/usefulteam/jwt-auth/pull/47)
+
 = 2.0.0 =
 - Breaking change: rename `jwt_auth_valid_token_extra` filter to `jwt_auth_extra_token_check`. Please check if you use this filter.
 - Breaking bugfix: the actual http statusCode didn't follow the response statusCode. Now the actual http statusCode follows the response statusCode.
