@@ -159,15 +159,40 @@ The **jwt-auth** will intercept every call to the server and will look for the a
 
 If the token is valid, the API call flow will continue as always.
 
-## Whitelisting Endpoints
+## Whitelisting/Blacklisting Endpoints
 
-Every call to the server (except the token creation some default whitelist) will be intercepted. However, you might need to whitelist some endpoints. You can use `jwt_auth_whitelist` filter to do it. Please simply add this filter directly (without hook). Or, you can add it to `plugins_loaded`. Adding this filter inside `init` (or later) will not work. 
+Every call to the server (except the token creation some default whitelist) will be intercepted. However, you might need to whitelist some endpoints. You can use `jwt_auth_whitelist` filter to do it. Please simply add this filter directly (without hook). Or, you can add it to `plugins_loaded`. Adding this filter inside `init` (or later) will not work.
+
+You can authorize all request API by returning -1 on `jwt_auth_whitelist` hook.
 
 If you're adding the filter inside theme and the whitelisting doesn't work, please create a small 1 file plugin and add your filter there.
+
+You can allow all requests with the `jwt_auth_whitelist` hook and you can block specific requests with the hook `jwt_auth_blacklist`
 
 ```php
 add_filter( 'jwt_auth_whitelist', function ( $endpoints ) {
 	$your_endpoints = array(
+		[ 
+			"method" => WP_REST_Server::READABLE,
+			"path" => '/wp-json/custom/v1/webhook2/*',
+		],
+		'/wp-json/custom/v1/webhook/*',
+		'/wp-json/custom/v1/otp/*',
+		'/wp-json/custom/v1/account/check',
+		'/wp-json/custom/v1/register',
+	);
+
+	return array_unique( array_merge( $endpoints, $your_endpoints ) );
+} );
+```
+
+```php
+add_filter( 'jwt_auth_blacklist', function ( $endpoints ) {
+	$your_endpoints = array(
+		[ 
+			"method" => WP_REST_Server::READABLE,
+			"path" => '/wp-json/custom/v1/webhook2/*',
+		],
 		'/wp-json/custom/v1/webhook/*',
 		'/wp-json/custom/v1/otp/*',
 		'/wp-json/custom/v1/account/check',
