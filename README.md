@@ -6,7 +6,7 @@ This plugin probably is the most convenient way to do JWT Authentication in Word
 
 - Support & question: [WordPress support forum](https://wordpress.org/support/plugin/jwt-auth/)
 - Reporting plugin's bug: [GitHub issues tracker](https://github.com/usefulteam/jwt-auth/issues)
-- [Discord channel](https://discord.gg/DgECpEg) also available for faster response.
+- [Discord channel](https://discord.gg/DgECpEg) also available.
 
 ## Requirements
 
@@ -786,19 +786,10 @@ OK (13 tests, 110 assertions)
 
 ## Keep This Plugin Alive & Maintained
 
-You can help me to keep this plugin alive and continue to maintain it by:
+You can help us to keep this plugin alive and continue to maintain it by:
 
 - Giving **5 Stars** [review here](https://wordpress.org/plugins/jwt-auth/)
-- [Donate Now](#donate)
-
-## Donate
-
-- If you use this plugin to help you in your work,
-- Or if this plugin benefit you, resulting money for you
-- Or if your project depends on this plugin, and you want it to keep alive and maintained
-
-Then **let's be fair** and feel free to donate me via:
-
-- [PayPal](https://www.paypal.me/bagusjavas)
+- Answering [GitHub issues](https://github.com/usefulteam/jwt-auth/issues) or questions on Discord.
+- Testing / participating to the submitted [PRs](https://github.com/usefulteam/jwt-auth/pulls)
 
 Thank You!
