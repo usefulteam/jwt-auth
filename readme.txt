@@ -799,7 +799,7 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 
 == Changelog ==
 = 3.0.1 =
-- Updated firebase/php-jwt to 6.3 to address security issue in versions prior to 6.x
+- Updated firebase/php-jwt to 6.3 to address security issue in versions prior to 6.x.
 
 = 3.0.0 =
 - New feature: Added support for refresh tokens.
