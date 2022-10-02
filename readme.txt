@@ -1,10 +1,10 @@
 === JWT Auth - WordPress JSON Web Token Authentication ===
 
-Contributors: contactjavas
+Contributors: contactjavas, tha_sun, dominic_ks
 Donate link: https://www.paypal.me/bagusjavas
 Tags: jwt, jwt-auth, token-authentication, json-web-token
 Requires at least: 5.2
-Tested up to: 5.8
+Tested up to: 6.0.2
 Stable tag: trunk
 Requires PHP: 7.2
 License: GPLv3
@@ -707,6 +707,9 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 3. Other error responses
 
 == Changelog ==
+= 2.1.1 =
+- Updated firebase/php-jwt to 6.3 to address security issue in versions prior to 6.x.
+
 = 2.1.0 =
 - It's possible now to whitelist an endpoint with specific method (GET/POST). See [PR #47](https://github.com/usefulteam/jwt-auth/pull/47)
 
