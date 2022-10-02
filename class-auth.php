@@ -15,6 +15,7 @@ use WP_REST_Response;
 use WP_REST_Server;
 
 use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 /**
  * The public-facing functionality of the plugin.
@@ -407,7 +408,7 @@ class Auth {
 		// Try to decode the token.
 		try {
 			$alg     = $this->get_alg();
-			$payload = JWT::decode( $token, $secret_key, array( $alg ) );
+			$payload = JWT::decode( $token, new Key( $secret_key , $alg ));
 
 			// The Token is decoded now validate the iss.
 			if ( $payload->iss !== $this->get_iss() ) {

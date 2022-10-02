@@ -1,10 +1,9 @@
 === JWT Auth - WordPress JSON Web Token Authentication ===
 
-Contributors: contactjavas, tha_sun
-Donate link: https://www.paypal.me/bagusjavas
+Contributors: contactjavas, tha_sun, dominic_ks
 Tags: jwt, jwt-auth, token-authentication, json-web-token
 Requires at least: 5.2
-Tested up to: 5.8
+Tested up to: 6.0.2
 Stable tag: trunk
 Requires PHP: 7.2
 License: GPLv3
@@ -799,6 +798,9 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 3. Other error responses
 
 == Changelog ==
+= 3.0.1 =
+- Updated firebase/php-jwt to 6.3 to address security issue in versions prior to 6.x.
+
 = 3.0.0 =
 - New feature: Added support for refresh tokens.
 - New feature: Added automated end-to-end tests using PHPUnit.
