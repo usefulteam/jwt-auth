@@ -581,7 +581,7 @@ class Auth {
 				),
 				401
 			);
-		} elseif ( $user_refresh_tokens[ $device ]['token'] !== $refresh_token ) {
+		} elseif ( $refresh_token !== $user_refresh_tokens[ $device ]['token'] ) {
 			return new WP_REST_Response(
 				array(
 					'success'    => false,
