@@ -359,6 +359,42 @@ If the token is invalid an error will be returned. Here are some samples of erro
 }
 `
 
+= Invalid Refresh Token =
+
+`
+{
+	"success": false,
+	"statusCode": 401,
+	"code": "jwt_auth_invalid_refresh_token",
+	"message": "Invalid refresh token",
+	"data": []
+}
+`
+
+= Obsolete Refresh Token =
+
+`
+{
+	"success": false,
+	"statusCode": 401,
+	"code": "jwt_auth_obsolete_refresh_token",
+	"message": "Refresh token is obsolete",
+	"data": []
+}
+`
+
+= Expired Refresh Token =
+
+`
+{
+	"success": false,
+	"statusCode": 401,
+	"code": "jwt_auth_expired_refresh_token",
+	"message": "Refresh token has expired",
+	"data": []
+}
+`
+
 ## Available Filter Hooks
 
 **JWT Auth** is developer friendly and has some filters available to override the default settings.
