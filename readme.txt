@@ -5,7 +5,7 @@ Donate link: https://www.paypal.me/bagusjavas
 Tags: jwt, jwt-auth, token-authentication, json-web-token
 Requires at least: 5.2
 Tested up to: 6.0.2
-Stable tag: trunk
+Stable tag: 2.1.1
 Requires PHP: 7.2
 License: GPLv3
 License URI: https://oss.ninja/gpl-3.0?organization=Useful%20Team&project=WordPress%20JWT%20Auth
