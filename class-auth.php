@@ -659,8 +659,10 @@ class Auth {
 					}
 
 					if ( ! $is_ignored ) {
-						if ( ! $this->is_whitelisted() ) {
+						if ( ! $this->is_listed( "whitelist" ) || $this->is_listed( "blacklist" ) ) {
 							$this->jwt_error = $payload;
+						}else{
+							$this->jwt_error = null;
 						}
 					}
 				}
@@ -676,15 +678,19 @@ class Auth {
 	}
 
 	/**
-	 * Check whether or not current endpoint is whitelisted.
-	 *
+	 * Check whether or not current endpoint is whitelisted or blacklisted.
+	 * @param string $listType whitelist|blacklist
 	 * @return bool
 	 */
-	public function is_whitelisted() {
-		$whitelist = apply_filters( 'jwt_auth_whitelist', array() );
+	public function is_listed( $listType = "whitelist" ) {
+		$is_whitelist  = $listType == "whitelist";
+		$default_value = $is_whitelist ? array() : -1;
+		$list = apply_filters( 'jwt_auth_' . $listType, $default_value );
 
-		if ( empty( $whitelist ) || ! is_array( $whitelist ) ) {
+		if ( empty( $list ) ) {
 			return false;
+		}else if( $list === -1 ){
+			return $is_whitelist ? true : false;
 		}
 
 		$request_uri    = $_SERVER['REQUEST_URI'];
@@ -703,7 +709,7 @@ class Auth {
 		// Let's remove trailingslash for easier checking.
 		$request_uri = untrailingslashit( $request_uri );
 
-		foreach ( $whitelist as $endpoint ) {
+		foreach ( $list as $endpoint ) {
 			if ( is_array( $endpoint ) ) {
 				$method = $endpoint['method'];
 				$path   = $endpoint['path'];
