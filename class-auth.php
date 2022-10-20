@@ -163,7 +163,7 @@ class Auth {
 					'success'    => false,
 					'statusCode' => 403,
 					'code'       => $error_code,
-					'message'    => strip_tags( $user->get_error_message( $error_code ) ),
+					'message'    => wp_strip_all_tags( $user->get_error_message( $error_code ) ),
 					'data'       => array(),
 				),
 				403
@@ -283,11 +283,11 @@ class Auth {
 		 * return the user.
 		 */
 		$headerkey = apply_filters( 'jwt_auth_authorization_header', 'HTTP_AUTHORIZATION' );
-		$auth      = isset( $_SERVER[ $headerkey ] ) ? $_SERVER[ $headerkey ] : false;
+		$auth      = isset( $_SERVER[ $headerkey ] ) ? getenv( $headerkey ) : false;
 
 		// Double check for different auth header string (server dependent).
 		if ( ! $auth ) {
-			$auth = isset( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) ? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] : false;
+			$auth = isset( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) ? getenv( 'REDIRECT_HTTP_AUTHORIZATION' ) : false;
 		}
 
 		if ( ! $auth ) {
@@ -453,7 +453,7 @@ class Auth {
 		 */
 		$this->rest_api_slug = get_option( 'permalink_structure' ) ? rest_get_url_prefix() : '?rest_route=/';
 
-		$valid_api_uri = strpos( $_SERVER['REQUEST_URI'], $this->rest_api_slug );
+		$valid_api_uri = strpos( getenv( 'REQUEST_URI' ), $this->rest_api_slug );
 
 		if ( ! $valid_api_uri ) {
 			return $user_id;
@@ -463,7 +463,7 @@ class Auth {
 		 * If the request URI is for validate the token don't do anything,
 		 * This avoid double calls to the validate_token function.
 		 */
-		$validate_uri = strpos( $_SERVER['REQUEST_URI'], 'token/validate' );
+		$validate_uri = strpos( getenv( 'REQUEST_URI' ), 'token/validate' );
 
 		if ( $validate_uri > 0 ) {
 			return $user_id;
@@ -476,7 +476,7 @@ class Auth {
 			if ( 'jwt_auth_no_auth_header' === $payload->data['code'] ||
 				'jwt_auth_bad_auth_header' === $payload->data['code']
 			) {
-				$request_uri   = $_SERVER['REQUEST_URI'];
+				$request_uri   = getenv( 'REQUEST_URI' );
 				$rest_api_slug = home_url( '/' . $this->rest_api_slug, 'relative' );
 
 				if ( $rest_api_slug . '/jwt-auth/v1/token' !== $request_uri ) {
@@ -535,8 +535,8 @@ class Auth {
 			return false;
 		}
 
-		$request_uri    = $_SERVER['REQUEST_URI'];
-		$request_method = $_SERVER['REQUEST_METHOD'];
+		$request_uri    = getenv( 'REQUEST_URI' );
+		$request_method = getenv( 'REQUEST_METHOD' );
 
 		$prefix      = get_option( 'permalink_structure' ) ? rest_get_url_prefix() : '?rest_route=/';
 		$split       = explode( $prefix, $request_uri );
