@@ -4,7 +4,7 @@ Contributors: contactjavas, tha_sun, dominic_ks
 Donate link: https://www.paypal.me/bagusjavas
 Tags: jwt, jwt-auth, token-authentication, json-web-token
 Requires at least: 5.2
-Tested up to: 6.0.2
+Tested up to: 6.1
 Stable tag: 2.1.2
 Requires PHP: 7.2
 License: GPLv3
