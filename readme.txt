@@ -145,53 +145,6 @@ The **jwt-auth** will intercept every call to the server and will look for the a
 
 If the token is valid, the API call flow will continue as always.
 
-## Whitelisting Endpoints
-
-Every call to the server (except the token creation some default whitelist) will be intercepted. However, you might need to whitelist some endpoints. You can use `jwt_auth_whitelist` filter to do it. Please simply add this filter directly (without hook). Or, you can add it to `plugins_loaded`. Adding this filter inside `init` (or later) will not work. 
-
-If you're adding the filter inside theme and the whitelisting doesn't work, please create a small 1 file plugin and add your filter there.
-
-`
-add_filter( 'jwt_auth_whitelist', function ( $endpoints ) {
-	$your_endpoints = array(
-		'/wp-json/custom/v1/webhook/*',
-		'/wp-json/custom/v1/otp/*',
-		'/wp-json/custom/v1/account/check',
-		'/wp-json/custom/v1/register',
-	);
-
-	return array_unique( array_merge( $endpoints, $your_endpoints ) );
-} );
-`
-
-## Default Whitelisted Endpoints
-
-We whitelist some endpoints by default. This is to prevent error regarding WordPress & WooCommerce. These are the default whitelisted endpoints (without trailing *&#42;* char):
-
-`
-// Whitelist some endpoints by default (without trailing * char).
-$default_whitelist = array(
-	// WooCommerce namespace.
-	$rest_api_slug . '/wc/',
-	$rest_api_slug . '/wc-auth/',
-	$rest_api_slug . '/wc-analytics/',
-
-	// WordPress namespace.
-	$rest_api_slug . '/wp/v2/',
-);
-`
-
-You might want to **remove** or modify the existing **default whitelist**. You can use `jwt_auth_default_whitelist` filter to do it. Please simply add this filter directly (without hook). Or, you can add it to `plugins_loaded`. Adding this filter inside `init` (or later) will not work. 
-
-If you're adding the filter inside theme and the it doesn't work, please create a small 1 file plugin and add your filter there. It should fix the issue.
-
-`
-add_filter( 'jwt_auth_default_whitelist', function ( $default_whitelist ) {
-	// Modify the $default_whitelist here.
-	return $default_whitelist;
-} );
-`
-
 ## Validating Token
 
 You likely **don't need** to validate the token your self. The plugin handle it for you like explained above.
@@ -779,10 +732,6 @@ define('JWT_AUTH_CORS_ENABLE', true);
 Finally activate the plugin within the plugin dashboard.
 
 == Frequently Asked Questions ==
-= Now almost all REST routes are intercepted. How to exclude some routes/ endpoints? =
-
-There's `jwt_auth_whitelist` that you can use to whitelist specific endpoints. For more information, pease read **Whitelisting Endpoints** section in the Description tab.
-
 = Do you have GitHub repository for this plugin? =
 
 You can visit the GitHub repository [here](https://github.com/usefulteam/jwt-auth/)
@@ -806,6 +755,7 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 - New feature: Added automated end-to-end tests using PHPUnit.
 - Breaking change: Reduced default access token lifetime to 10 minutes.
 - Breaking bugfix: All authentication error responses are using the correct HTTP status code 401 (Unauthorized) instead of 403 (Forbidden) now.
+- Breaking change: Removed whitelist. To retain similar functionality, install a separate plugin, such as https://wordpress.org/plugins/disable-rest-api-and-require-jwt-oauth-authentication/
 
 = 2.1.0 =
 - It's possible now to whitelist an endpoint with specific method (GET/POST). See [PR #47](https://github.com/usefulteam/jwt-auth/pull/47)

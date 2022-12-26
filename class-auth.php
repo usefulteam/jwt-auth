@@ -623,111 +623,16 @@ class Auth {
 
 		$payload = $this->validate_token( false );
 
-		// If $payload is an error response, then return the default $user_id.
+		// If $payload is an error response, then the client did not send a token,
+		// or the token is invalid, the client uses a different way to authenticate,
+		// or the endpoint does not require authentication.
+		// Let the endpoint do its regular access checks.
 		if ( $this->is_error_response( $payload ) ) {
-			if ( 'jwt_auth_no_auth_header' === $payload->data['code'] ||
-				'jwt_auth_bad_auth_header' === $payload->data['code']
-			) {
-				$request_uri   = $_SERVER['REQUEST_URI'];
-				$rest_api_slug = home_url( '/' . $this->rest_api_slug, 'relative' );
-
-				if ( strpos( $request_uri, $rest_api_slug . '/jwt-auth/v1/token' ) !== 0 ) {
-					// Whitelist some endpoints by default (without trailing * char).
-					$default_whitelist = array(
-						// WooCommerce namespace.
-						$rest_api_slug . '/wc/',
-						$rest_api_slug . '/wc-admin/',
-						$rest_api_slug . '/wc-auth/',
-						$rest_api_slug . '/wc-analytics/',
-
-						// WordPress namespace.
-						$rest_api_slug . '/wp/v2/',
-						$rest_api_slug . '/oembed/',
-					);
-
-					// Well, we let you adjust this default whitelist :).
-					$default_whitelist = apply_filters( 'jwt_auth_default_whitelist', $default_whitelist );
-
-					$is_ignored = false;
-
-					foreach ( $default_whitelist as $endpoint ) {
-						if ( false !== stripos( $request_uri, $endpoint ) ) {
-							$is_ignored = true;
-
-							break;
-						}
-					}
-
-					if ( ! $is_ignored ) {
-						if ( ! $this->is_whitelisted() ) {
-							$this->jwt_error = $payload;
-						}
-					}
-				}
-			} else {
-				$this->jwt_error = $payload;
-			}
-
 			return $user_id;
 		}
 
 		// Everything is ok here, return the user ID stored in the token.
 		return $payload->data->user->id;
-	}
-
-	/**
-	 * Check whether or not current endpoint is whitelisted.
-	 *
-	 * @return bool
-	 */
-	public function is_whitelisted() {
-		$whitelist = apply_filters( 'jwt_auth_whitelist', array() );
-
-		if ( empty( $whitelist ) || ! is_array( $whitelist ) ) {
-			return false;
-		}
-
-		$request_uri    = $_SERVER['REQUEST_URI'];
-		$request_method = $_SERVER['REQUEST_METHOD'];
-
-		$prefix      = get_option( 'permalink_structure' ) ? rest_get_url_prefix() : '?rest_route=/';
-		$split       = explode( $prefix, $request_uri );
-		$request_uri = '/' . $prefix . ( ( count( $split ) > 1 ) ? $split[1] : $split[0] );
-
-		// Only use string before "?" sign if permalink is enabled.
-		if ( get_option( 'permalink_structure' ) && false !== stripos( $request_uri, '?' ) ) {
-			$split       = explode( '?', $request_uri );
-			$request_uri = $split[0];
-		}
-
-		// Let's remove trailingslash for easier checking.
-		$request_uri = untrailingslashit( $request_uri );
-
-		foreach ( $whitelist as $endpoint ) {
-			if ( is_array( $endpoint ) ) {
-				$method = $endpoint['method'];
-				$path   = $endpoint['path'];
-			} else {
-				$method = null;
-				$path   = $endpoint;
-			}
-			// If the endpoint doesn't contain * sign.
-			if ( false === stripos( $path, '*' ) ) {
-				$path = untrailingslashit( $path );
-
-				if ( $path === $request_uri && ( ! isset( $method ) || $method === $request_method ) ) {
-					return true;
-				}
-			} else {
-				$regex = '/' . str_replace( '/', '\/', $path ) . '/';
-
-				if ( preg_match( $regex, $request_uri ) && ( ! isset( $method ) || $method === $request_method ) ) {
-					return true;
-				}
-			}
-		}
-
-		return false;
 	}
 
 	/**
