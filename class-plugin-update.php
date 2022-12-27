@@ -18,6 +18,8 @@ class Plugin_Updates {
    */
   public function __construct() {
     add_action( 'in_plugin_update_message-jwt-auth/jwt-auth.php' , array( $this , 'display_update_warnings' ) , 10 , 2 );
+		add_action( 'admin_notices' , array( $this , 'display_future_update_warning' ) );
+		add_action( 'admin_init', array( 'PAnD', 'init' ) );
   }
 
 	/**
@@ -58,4 +60,25 @@ class Plugin_Updates {
 		echo $output;
 
 	}
+
+  public function display_future_update_warning() {
+
+    if ( ! \PAnD::is_admin_notice_active( 'jwt-v3-update-warning-1' ) ) {
+      return;
+    }
+
+    ob_start(); ?>
+
+    <div data-dismissible="jwt-v3-update-warning-1" class="updated notice notice-warning is-dismissible">
+			<div style="font-weight: normal; overflow:auto">
+				<p><?php echo __( 'Important! An upcoming version of the JWT Auth plugin contains major new features that will change the behaviour of your site.', 'jwt-auth' ); ?>
+					<?php echo __( 'More information can be found on <a href="https://wordpress.org/plugins/jwt-auth/" target="_blank">the plugin page on WordPress.org</a>.', 'jwt-auth' ); ?></p>
+			</div>
+    </div>
+
+    <?php
+    $output = ob_get_clean();
+    echo $output;
+
+  }
 }

@@ -20,7 +20,7 @@ WordPress JSON Web Token Authentication allows you to do REST API authentication
 - [Discord channel](https://discord.gg/DgECpEg) also available for faster response.
 
 ## IMPORTANT INFORMATION FOR V3.x+
-The latest version of this plugin will soon be released on the WordPress.org plugin repo.
+[The latest version](https://github.com/usefulteam/jwt-auth/) of this plugin will soon be released on the WordPress.org plugin repo.
 
 If you are updating from V2.x to V3.x you should familiarise yourself with the upcoming changes to ensure that your site continues to work as you expect it to.
 

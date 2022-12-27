@@ -11,6 +11,7 @@
     ],
     "minimum-stability": "stable",
     "require": {
-        "firebase/php-jwt": "^6.3"
+        "firebase/php-jwt": "^6.3",
+        "collizo4sky/persist-admin-notices-dismissal": "^1.4"
     }
 }
