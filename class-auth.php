@@ -606,7 +606,7 @@ class Auth {
 
 		$valid_api_uri = strpos( $_SERVER['REQUEST_URI'], $this->rest_api_slug );
 
-		// if already valid user or invalid url, don't attempt to validate token
+		// Skip validation if not a REST API request or a user was determined already.
 		if ( ! $valid_api_uri || $user_id ) {
 			return $user_id;
 		}
