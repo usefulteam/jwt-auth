@@ -361,6 +361,8 @@ add_filter(
 
 The **jwt_auth_authorization_header** allows you to modify the Authorization header key used to validating a token. Useful when the server already uses the 'Authorization' key for another auth method.
 
+The header is retrieved from `$_SERVER` which means headers are prefixed with `HTTP_` and converted to capitalized snake case. Example: The key for a custom `X-Auth` header is `HTTP_X_AUTH`.
+
 Default value:
 
 ```
