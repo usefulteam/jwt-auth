@@ -122,7 +122,7 @@ class Auth {
 
 				return array_merge( $headers, $split );
 			} );
-		} else if ( $enable_cors ) {
+		} else if ( $enable_cors && ! headers_sent() ) {
 			$headers = apply_filters( 'jwt_auth_cors_allow_headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization' );
 
 			header( sprintf( 'Access-Control-Allow-Headers: %s', $headers ) );
