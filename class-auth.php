@@ -102,8 +102,28 @@ class Auth {
 	public function add_cors_support() {
 		$enable_cors = defined( 'JWT_AUTH_CORS_ENABLE' ) ? JWT_AUTH_CORS_ENABLE : false;
 
-		if ( $enable_cors && !headers_sent() ) {
-			$headers = apply_filters( 'jwt_auth_cors_allow_headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization, Cookie' );
+		global $wp_version;
+		$parsedVersion = array_map( function ( $value ) {
+			return intval( $value );
+		}, explode( '.', $wp_version ) );
+
+		$major = $parsedVersion[0] ?? 0;
+		$minor = $parsedVersion[1] ?? 0;
+
+		// Hook exists since 5.5.0
+		$versionCheck = $major > 5 || ($major === 5 && $minor >= 5 );
+
+		if ( $enable_cors && $versionCheck ) {
+			add_filter( 'rest_allowed_cors_headers', function ( array $headers ) {
+
+				$filters = apply_filters( 'jwt_auth_cors_allow_headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization' );
+
+				$split = preg_split( "/[\s,]+/", $filters );
+
+				return array_merge( $headers, $split );
+			} );
+		} else if ( $enable_cors ) {
+			$headers = apply_filters( 'jwt_auth_cors_allow_headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization' );
 
 			header( sprintf( 'Access-Control-Allow-Headers: %s', $headers ) );
 		}
