@@ -100,20 +100,16 @@ class Auth {
 	 * Add CORs suppot to the request.
 	 */
 	public function add_cors_support() {
+		global $wp_version;
+
 		$enable_cors = defined( 'JWT_AUTH_CORS_ENABLE' ) ? JWT_AUTH_CORS_ENABLE : false;
 
-		global $wp_version;
-		$parsedVersion = array_map( function ( $value ) {
-			return intval( $value );
-		}, explode( '.', $wp_version ) );
-
-		$major = $parsedVersion[0] ?? 0;
-		$minor = $parsedVersion[1] ?? 0;
-
+		if( ! enable_cors ) {
+			return;
+		}
+		
 		// Hook exists since 5.5.0
-		$versionCheck = $major > 5 || ($major === 5 && $minor >= 5 );
-
-		if ( $enable_cors && $versionCheck ) {
+		if ( version_compare( $wp_version, '5.5.0', '>=' ) ) {
 			add_filter( 'rest_allowed_cors_headers', function ( array $headers ) {
 
 				$filters = apply_filters( 'jwt_auth_cors_allow_headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization' );
@@ -122,8 +118,8 @@ class Auth {
 
 				return array_merge( $headers, $split );
 			} );
-		} else if ( $enable_cors && ! headers_sent() ) {
-			$headers = apply_filters( 'jwt_auth_cors_allow_headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization' );
+		} else if ( ! headers_sent() ) {
+			$headers = apply_filters( 'jwt_auth_cors_allow_headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization, Cookie' );
 
 			header( sprintf( 'Access-Control-Allow-Headers: %s', $headers ) );
 		}
