@@ -104,15 +104,15 @@ class Auth {
 
 		$enable_cors = defined( 'JWT_AUTH_CORS_ENABLE' ) ? JWT_AUTH_CORS_ENABLE : false;
 
-		if( ! enable_cors ) {
+		if ( ! $enable_cors ) {
 			return;
 		}
-		
+
 		// Hook exists since 5.5.0
 		if ( version_compare( $wp_version, '5.5.0', '>=' ) ) {
 			add_filter( 'rest_allowed_cors_headers', function ( array $headers ) {
 
-				$filters = apply_filters( 'jwt_auth_cors_allow_headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization' );
+				$filters = apply_filters( 'jwt_auth_cors_allow_headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization, Cookie' );
 
 				$split = preg_split( "/[\s,]+/", $filters );
 
