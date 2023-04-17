@@ -571,16 +571,33 @@ class Auth {
 		$user_refresh_tokens = get_user_meta( $user_id, 'jwt_auth_refresh_tokens', true );
 		$refresh_token       = $parts[1];
 
-		if ( empty( $user_refresh_tokens[ $device ] ) ||
-			$user_refresh_tokens[ $device ]['token'] !== $refresh_token ||
-			$user_refresh_tokens[ $device ]['expires'] < time()
-			) {
+		if ( empty( $user_refresh_tokens[ $device ] ) ) {
 			return new WP_REST_Response(
 				array(
 					'success'    => false,
 					'statusCode' => 401,
-					'code'       => 'jwt_auth_obsolete_token',
-					'message'    => __( 'Token is obsolete', 'jwt-auth' ),
+					'code'       => 'jwt_auth_invalid_refresh_token',
+					'message'    => __( 'Invalid refresh token', 'jwt-auth' ),
+				),
+				401
+			);
+		} elseif ( $refresh_token !== $user_refresh_tokens[ $device ]['token'] ) {
+			return new WP_REST_Response(
+				array(
+					'success'    => false,
+					'statusCode' => 401,
+					'code'       => 'jwt_auth_obsolete_refresh_token',
+					'message'    => __( 'Refresh token is obsolete', 'jwt-auth' ),
+				),
+				401
+			);
+		} elseif ( time() > $user_refresh_tokens[ $device ]['expires'] ) {
+			return new WP_REST_Response(
+				array(
+					'success'    => false,
+					'statusCode' => 401,
+					'code'       => 'jwt_auth_expired_refresh_token',
+					'message'    => __( 'Refresh token has expired', 'jwt-auth' ),
 				),
 				401
 			);
