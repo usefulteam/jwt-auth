@@ -275,7 +275,16 @@ class Auth {
 		$expires       = $created + DAY_IN_SECONDS * 30;
 		$expires       = apply_filters( 'jwt_auth_refresh_expire', $expires, $created );
 
-		setcookie( 'refresh_token', $user->ID . '.' . $refresh_token, $expires, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
+		$enable_cors = defined( 'JWT_AUTH_CORS_ENABLE' ) ? JWT_AUTH_CORS_ENABLE : false;
+
+		setcookie( 'refresh_token', $user->ID . '.' . $refresh_token, [
+			'expires'  => $expires,
+			'path'     => COOKIEPATH,
+			'domain'   => COOKIE_DOMAIN,
+			'secure'   => is_ssl(),
+			'httponly' => true,
+			'samesite' => ( $enable_cors && is_ssl() ) ? 'None' : 'Lax'
+		] );
 
 		// Save new refresh token for the user, replacing the previous one.
 		// The refresh token is rotated for the passed device only, not affecting
