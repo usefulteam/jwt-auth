@@ -18,8 +18,8 @@ class Devices {
 	 */
 	public function __construct() {
 
-		add_action( 'show_user_profile', array( $this, 'custom_user_profile_fields' ), 10, 1 );
-		add_action( 'edit_user_profile', array( $this, 'custom_user_profile_fields' ), 10, 1 );
+		add_action( 'show_user_profile', array( $this, 'custom_user_profile_fields' ), 10, 1 ); //hook when user edit yourself
+		add_action( 'edit_user_profile', array( $this, 'custom_user_profile_fields' ), 10, 1 ); //hooke when user edit another user
 
 		add_action( 'wp_ajax_remove_device', array( $this, 'remove_device' ) );
 		add_shortcode( 'jwt_auth_devices', array( $this, 'shortcode_jwt_auth_devices' ) );
@@ -311,21 +311,10 @@ class Devices {
 	 */
 	public function custom_user_profile_fields( $profileuser ) {
 
-		// If is current user's profile (profile.php).
-		if ( defined( 'IS_PROFILE_PAGE' ) && IS_PROFILE_PAGE ) {
-			$user_id = get_current_user_id();
-		} elseif ( ! empty( $_GET['user_id'] ) && is_numeric( $_GET['user_id'] ) ) { // phpcs:ignore
-			// If is another user's profile page.
-			$user_id = absint( $_GET['user_id'] ); // phpcs:ignore
-		} else {
-			// Otherwise something is wrong.
-			die( 'No user id defined.' );
-		}
-
 		?>
 		<h2><?php echo __( 'Connected Devices', 'jwt-auth' ); ?></h2>
 		<div id="jwt_auth_devices" style="width:33%">
-			<?php echo do_shortcode( '[jwt_auth_devices user_id=' . $user_id . ']' ); ?>
+			<?php echo do_shortcode( '[jwt_auth_devices user_id=' . $profileuser->ID . ']' ); ?>
 		</div>
 		<?php
 
