@@ -184,7 +184,7 @@ class Auth {
 					'success'    => false,
 					'statusCode' => 401,
 					'code'       => $error_code,
-					'message'    => strip_tags( $user->get_error_message( $error_code ) ),
+					'message'    => strip_tags('Authentication failed: '.$error_code),
 					'data'       => array(),
 				),
 				401
