@@ -15,6 +15,7 @@ class Setup {
 	private static $instance;
 	public $auth;
 	public $devices;
+	public $updates;
 
 	/**
 	 * Constructs singleton.
@@ -39,6 +40,12 @@ class Setup {
 		add_filter( 'rest_api_init', array( $this->auth, 'add_cors_support' ) );
 		add_filter( 'rest_pre_dispatch', array( $this->auth, 'rest_pre_dispatch' ), 10, 3 );
 		add_filter( 'determine_current_user', array( $this->auth, 'determine_current_user' ) );
+
+		// add plugin updates class and filters only in wp-admin
+		if ( is_admin() ) {
+			$this->updates = new Plugin_Updates();
+		}
+
 	}
 
 	/**

@@ -5,7 +5,7 @@ Donate link: https://www.paypal.me/bagusjavas
 Tags: jwt, jwt-auth, token-authentication, json-web-token
 Requires at least: 5.2
 Tested up to: 6.1
-Stable tag: 2.1.2
+Stable tag: 2.1.4
 Requires PHP: 7.2
 License: GPLv3
 License URI: https://oss.ninja/gpl-3.0?organization=Useful%20Team&project=WordPress%20JWT%20Auth
@@ -18,6 +18,32 @@ WordPress JSON Web Token Authentication allows you to do REST API authentication
 - Support & question: [WordPress support forum](https://wordpress.org/support/plugin/jwt-auth/)
 - Reporting plugin's bug: [GitHub issues tracker](https://github.com/usefulteam/jwt-auth/issues)
 - [Discord channel](https://discord.gg/DgECpEg) also available for faster response.
+
+## IMPORTANT INFORMATION FOR V3.x+
+[The latest version](https://github.com/usefulteam/jwt-auth/) of this plugin will soon be released on the WordPress.org plugin repo.
+
+If you are updating from V2.x to V3.x you should familiarise yourself with the upcoming changes to ensure that your site continues to work as you expect it to.
+
+There are two imoportant changes:
+
+= Introduction of refresh tokens =
+
+[See this section of the readme on GitHub](https://github.com/usefulteam/jwt-auth#refreshing-the-access-token)
+
+Key changes:
+
+- Default JWT expiry time will reduce from 7 days to 10 minutes.
+- On expiry of a JWT, your client will need to manage getting a new token using the [refresh token process described here](https://github.com/usefulteam/jwt-auth#refreshing-the-access-token).
+- If you would prefer to retain the 7 day expiry time initially or permanently, you can use the `jwt_auth_expire` hook as documented on this page to force the expiry time to remain at 7 days.
+
+= Removal of the URL whitelist and related filter =
+
+Key changes:
+
+- Users of this plugin will no longer need to whitelist the REST paths from other plugins using the  `jwt_auth_whitelist` as documented on this page.
+- Instead, custom API routes should have the permissions requirement coded via the [permissions callback](https://developer.wordpress.org/rest-api/extending-the-rest-api/adding-custom-endpoints/#permissions-callback) of the REST API route when it is registered.
+- This means that if a route requires authentication, any authentication method can be used and should reduce conflicts between this and other plugins.
+- For further information please see [this discussion](https://github.com/usefulteam/jwt-auth/pull/60) on GitHub.
 
 ## Enable PHP HTTP Authorization Header
 
@@ -707,6 +733,15 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 3. Other error responses
 
 == Changelog ==
+= 2.1.4 =
+- Added update warning and information relevant to updating to version 3.x+
+
+= 2.1.3 =
+- Fix some missing composer files in 2.1.2.
+
+= 2.1.2 =
+- Updated to fix a number of issues highlighted by wpcs.
+
 = 2.1.1 =
 - Updated firebase/php-jwt to 6.3 to address security issue in versions prior to 6.x.
 
