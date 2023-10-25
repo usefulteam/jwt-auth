@@ -6,3 +6,10 @@
 .gitignore
 
 README.md
+composer.json
+composer.lock
+DOCKER_ENV
+docker_tag
+Dockerfile-php-build
+output.log
+phpcs.xml
