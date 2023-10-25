@@ -733,6 +733,9 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 3. Other error responses
 
 == Changelog ==
+= 2.1.5 =
+- Removed dev and build files from distribution
+
 = 2.1.4 =
 - Added update warning and information relevant to updating to version 3.x+
 
