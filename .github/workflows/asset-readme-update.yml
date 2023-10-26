@@ -3,6 +3,9 @@ on:
   push:
     branches:
     - wp-org-master
+    paths:
+      - 'readme.txt'
+      - '.wordpress-org/**'
 jobs:
   trunk:
     name: Push to trunk
