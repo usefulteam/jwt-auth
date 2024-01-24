@@ -3,13 +3,17 @@
 namespace UsefulTeam\Tests\JwtAuth;
 
 use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Exception\GuzzleException;
 use PHPUnit\Framework\TestCase;
 
 final class AccessTokenTest extends TestCase {
 
   use RestTestTrait;
 
-  public function testToken(): string {
+	/**
+	 * @throws GuzzleException
+	 */
+	public function testToken(): string {
     $response = $this->client->post('/wp-json/jwt-auth/v1/token', [
       'form_params' => [
         'username' => $this->username,
@@ -36,6 +40,7 @@ final class AccessTokenTest extends TestCase {
 
   /**
    * @depends testToken
+   * @throws GuzzleException
    */
   public function testTokenValidate(string $token): void {
     $this->assertNotEmpty($token);
@@ -53,6 +58,7 @@ final class AccessTokenTest extends TestCase {
 
   /**
    * @depends testToken
+   * @throws GuzzleException
    */
   public function testTokenValidateWithInvalidToken(string $token): void {
     $this->assertNotEmpty($token);
@@ -70,6 +76,7 @@ final class AccessTokenTest extends TestCase {
 
   /**
    * @depends testToken
+   * @throws GuzzleException
    */
   public function testTokenRefreshWithInvalidToken(string $token): void {
     $this->assertNotEmpty($token);
@@ -87,7 +94,7 @@ final class AccessTokenTest extends TestCase {
     $cookies = [
       'refresh_token' => $token,
     ];
-    $domain = $this->client->getConfig('base_uri')->getHost();
+    $domain = $this->getDomain();
     $cookies = CookieJar::fromArray($cookies, $domain);
 
     $response = $this->client->post('/wp-json/jwt-auth/v1/token/refresh', [
@@ -101,6 +108,7 @@ final class AccessTokenTest extends TestCase {
 
   /**
    * @depends testToken
+   * @throws GuzzleException
    */
   public function testTokenWithInvalidRefreshToken(string $token): void {
     $this->assertNotEmpty($token);
@@ -108,7 +116,7 @@ final class AccessTokenTest extends TestCase {
     $cookies = [
       'refresh_token' => $token,
     ];
-    $domain = $this->client->getConfig('base_uri')->getHost();
+    $domain = $this->getDomain();
     $cookies = CookieJar::fromArray($cookies, $domain);
 
     $response = $this->client->post('/wp-json/jwt-auth/v1/token', [
