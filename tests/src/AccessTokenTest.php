@@ -10,10 +10,10 @@ final class AccessTokenTest extends TestCase {
 
   use RestTestTrait;
 
-	/**
-	 * @throws GuzzleException
-	 */
-	public function testToken(): string {
+    /**
+     * @throws GuzzleException
+     */
+    public function testToken(): string {
     $response = $this->client->post('/wp-json/jwt-auth/v1/token', [
       'form_params' => [
         'username' => $this->username,

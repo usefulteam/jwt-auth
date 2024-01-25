@@ -67,7 +67,7 @@ trait RestTestTrait {
   }
 
   protected function getDomain(): string {
-	return parse_url($this->httpClientConfig['base_uri'], PHP_URL_HOST);
+    return parse_url($this->httpClientConfig['base_uri'], PHP_URL_HOST);
   }
 
 }
