@@ -15,7 +15,7 @@
     ],
     "minimum-stability": "stable",
     "require": {
-        "firebase/php-jwt": "~6.3.0"
+        "firebase/php-jwt": "^6.3"
     },
     "require-dev": {
         "php": ">=7.4",
