@@ -6,7 +6,7 @@ This plugin probably is the most convenient way to do JWT Authentication in Word
 
 - Support & question: [WordPress support forum](https://wordpress.org/support/plugin/jwt-auth/)
 - Reporting plugin's bug: [GitHub issues tracker](https://github.com/usefulteam/jwt-auth/issues)
-- [Discord channel](https://discord.gg/DgECpEg) also available for faster response.
+- [Discord channel](https://discord.gg/DgECpEg) also available.
 
 ## Requirements
 
@@ -87,12 +87,13 @@ When the plugin is activated, a new namespace is added.
 /jwt-auth/v1
 ```
 
-Also, two new endpoints are added to this namespace.
+Also, three new endpoints are added to this namespace.
 
 | Endpoint                              | HTTP Verb |
 | ------------------------------------- | --------- |
 | _/wp-json/jwt-auth/v1/token_          | POST      |
 | _/wp-json/jwt-auth/v1/token/validate_ | POST      |
+| _/wp-json/jwt-auth/v1/token/refresh_  | POST      |
 
 ## Requesting/ Generating Token
 
@@ -158,53 +159,6 @@ The **jwt-auth** will intercept every call to the server and will look for the a
 
 If the token is valid, the API call flow will continue as always.
 
-## Whitelisting Endpoints
-
-Every call to the server (except the token creation some default whitelist) will be intercepted. However, you might need to whitelist some endpoints. You can use `jwt_auth_whitelist` filter to do it. Please simply add this filter directly (without hook). Or, you can add it to `plugins_loaded`. Adding this filter inside `init` (or later) will not work. 
-
-If you're adding the filter inside theme and the whitelisting doesn't work, please create a small 1 file plugin and add your filter there.
-
-```php
-add_filter( 'jwt_auth_whitelist', function ( $endpoints ) {
-	$your_endpoints = array(
-		'/wp-json/custom/v1/webhook/*',
-		'/wp-json/custom/v1/otp/*',
-		'/wp-json/custom/v1/account/check',
-		'/wp-json/custom/v1/register',
-	);
-
-	return array_unique( array_merge( $endpoints, $your_endpoints ) );
-} );
-```
-
-## Default Whitelisted Endpoints
-
-We whitelist some endpoints by default. This is to prevent error regarding WordPress & WooCommerce. These are the default whitelisted endpoints (without trailing *&#42;* char):
-
-```php
-// Whitelist some endpoints by default (without trailing * char).
-$default_whitelist = array(
-	// WooCommerce namespace.
-	$rest_api_slug . '/wc/',
-	$rest_api_slug . '/wc-auth/',
-	$rest_api_slug . '/wc-analytics/',
-
-	// WordPress namespace.
-	$rest_api_slug . '/wp/v2/',
-);
-```
-
-You might want to **remove** or modify the existing **default whitelist**. You can use `jwt_auth_default_whitelist` filter to do it. Please simply add this filter directly (without hook). Or, you can add it to `plugins_loaded`. Adding this filter inside `init` (or later) will not work. 
-
-If you're adding the filter inside theme and the it doesn't work, please create a small 1 file plugin and add your filter there. It should fix the issue.
-
-```php
-add_filter( 'jwt_auth_default_whitelist', function ( $default_whitelist ) {
-	// Modify the $default_whitelist here.
-	return $default_whitelist;
-} );
-```
-
 ## Validating Token
 
 You likely **don't need** to validate the token your self. The plugin handle it for you like explained above.
@@ -225,6 +179,51 @@ But if you want to test or validate the token manually, then send a **POST** req
 }
 ```
 
+## Refreshing the Access Token
+
+For security reasons, third-party applications that are integrating with your authentication server will not store the user's username and password. Instead they will store the refresh token in a user-specific storage that is only accessible for the user. The refresh token can be used to re-authenticate as the same user and generate a new access token.
+
+When authenticating with `username` and `password` as the parameters to `/wp-json/jwt-auth/v1/token`, a refresh token is sent as a cookie in the response.
+
+`/wp-json/jwt-auth/v1/token`
+
+To generate new access token using the refresh token, submit a POST request to the token endpoint together with the `refresh_token` cookie.
+
+Use the optional parameter `device` with the device identifier to associate the token with that device.
+
+If the refresh token is valid, then you receive a new access token in the response.
+
+By default, each access token expires after 10 minutes.
+
+
+`/wp-json/jwt-auth/v1/token/refresh`
+
+To generate new refresh token using the refresh token, submit a POST request to the token refresh endpoint together with the `refresh_token` cookie.
+
+Use the optional parameter `device` with the device identifier to associate the refresh token with that device.
+
+If the refresh token is valid, then you receive a new refresh token as a cookie in the response.
+
+By default, each refresh token expires after 30 days.
+
+
+### Refresh Token Rotation
+
+Whenever you are authenticating afresh or refreshing the refresh token, only the last issued refresh token remains valid. All previously issued refresh tokens can no longer be used.
+
+This means that a refresh token cannot be shared. To allow multiple devices to authenticate in parallel without losing access after another device re-authenticated, use the parameter `device` with the device identifier to associate the refresh token only with that device.
+
+```sh
+curl -F device="abc-def" -F username=myuser -F password=mypass /wp-json/jwt-auth/v1/token
+```
+```sh
+curl -F device="abc-def" -b "refresh_token=123.abcdef..." /wp-json/jwt-auth/v1/token
+```
+```sh
+curl -F device="abc-def" -b "refresh_token=123.abcdef..." /wp-json/jwt-auth/v1/token/refresh
+```
+
+
 ## Error Responses
 
 If the token is invalid an error will be returned. Here are some samples of errors:
@@ -234,7 +233,7 @@ If the token is invalid an error will be returned. Here are some samples of erro
 ```json
 {
 	"success": false,
-	"statusCode": 403,
+	"statusCode": 500,
 	"code": "jwt_auth_bad_config",
 	"message": "JWT is not configured properly.",
 	"data": []
@@ -246,7 +245,7 @@ If the token is invalid an error will be returned. Here are some samples of erro
 ```json
 {
 	"success": false,
-	"statusCode": 403,
+	"statusCode": 401,
 	"code": "jwt_auth_no_auth_header",
 	"message": "Authorization header not found.",
 	"data": []
@@ -258,7 +257,7 @@ If the token is invalid an error will be returned. Here are some samples of erro
 ```json
 {
 	"success": false,
-	"statusCode": 403,
+	"statusCode": 401,
 	"code": "jwt_auth_bad_iss",
 	"message": "The iss do not match with this server.",
 	"data": []
@@ -270,19 +269,19 @@ If the token is invalid an error will be returned. Here are some samples of erro
 ```json
 {
 	"success": false,
-	"statusCode": 403,
+	"statusCode": 401,
 	"code": "jwt_auth_invalid_token",
 	"message": "Signature verification failed",
 	"data": []
 }
 ```
 
-**Bad Request**
+**Incomplete Payload**
 
 ```json
 {
 	"success": false,
-	"statusCode": 403,
+	"statusCode": 401,
 	"code": "jwt_auth_bad_request",
 	"message": "User ID not found in the token.",
 	"data": []
@@ -294,7 +293,7 @@ If the token is invalid an error will be returned. Here are some samples of erro
 ```json
 {
 	"success": false,
-	"statusCode": 403,
+	"statusCode": 401,
 	"code": "jwt_auth_user_not_found",
 	"message": "User doesn't exist",
 	"data": []
@@ -306,7 +305,7 @@ If the token is invalid an error will be returned. Here are some samples of erro
 ```json
 {
 	"success": false,
-	"statusCode": 403,
+	"statusCode": 401,
 	"code": "jwt_auth_invalid_token",
 	"message": "Expired token",
 	"data": []
@@ -318,7 +317,7 @@ If the token is invalid an error will be returned. Here are some samples of erro
 ```json
 {
 	"success": false,
-	"statusCode": 403,
+	"statusCode": 401,
 	"code": "jwt_auth_obsolete_token",
 	"message": "Token is obsolete",
 	"data": []
@@ -458,7 +457,7 @@ The `jwt_auth_expire` allows you to change the [**exp**](https://tools.ietf.org/
 Default Value:
 
 ```
-time() + (DAY_IN_SECONDS * 7)
+time() + (MINUTE_IN_SECONDS * 10)
 ```
 
 Usage example:
@@ -474,6 +473,38 @@ Usage example:
  */
 add_filter(
 	'jwt_auth_expire',
+	function ( $expire, $issued_at ) {
+		// Modify the "expire" here.
+		return $expire;
+	},
+	10,
+	2
+);
+```
+
+### jwt_auth_refresh_expire
+
+The `jwt_auth_refresh_expire` filter hook allows you to change the expiration date of the refresh token.
+
+Default Value:
+
+```
+time() + (DAY_IN_SECONDS * 30)
+```
+
+Usage example:
+
+```php
+/**
+ * Change the refresh token's expiration time.
+ *
+ * @param int $expire The default expiration timestamp.
+ * @param int $issued_at The current time.
+ *
+ * @return int The custom refresh token expiration timestamp.
+ */
+add_filter(
+	'jwt_auth_refresh_expire',
 	function ( $expire, $issued_at ) {
 		// Modify the "expire" here.
 		return $expire;
@@ -678,6 +709,23 @@ add_filter(
 ```
 
 
+## Automated Tests
+
+There are end-to-end tests you can run to confirm that the API works correctly:
+
+```console
+$ URL=https://example.local USERNAME=myuser PASSWORD=mypass composer run test
+> ./vendor/bin/phpunit
+PHPUnit 9.5.13 by Sebastian Bergmann and contributors.
+
+.............                                                     13 / 13 (100%)
+
+Time: 00:12.377, Memory: 6.00 MB
+
+OK (13 tests, 110 assertions)
+```
+
+
 ## Credits
 
 - [PHP-JWT from firebase](https://github.com/firebase/php-jwt)
@@ -691,19 +739,10 @@ add_filter(
 
 ## Keep This Plugin Alive & Maintained
 
-You can help me to keep this plugin alive and continue to maintain it by:
+You can help us to keep this plugin alive and continue to maintain it by:
 
 - Giving **5 Stars** [review here](https://wordpress.org/plugins/jwt-auth/)
-- [Donate Now](#donate)
-
-## Donate
-
-- If you use this plugin to help you in your work,
-- Or if this plugin benefit you, resulting money for you
-- Or if your project depends on this plugin, and you want it to keep alive and maintained
-
-Then **let's be fair** and feel free to donate me via:
-
-- [PayPal](https://www.paypal.me/bagusjavas)
+- Answering [GitHub issues](https://github.com/usefulteam/jwt-auth/issues) or questions on Discord.
+- Testing / participating to the submitted [PRs](https://github.com/usefulteam/jwt-auth/pulls)
 
 Thank You!

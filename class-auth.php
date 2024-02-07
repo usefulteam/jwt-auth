@@ -84,6 +84,16 @@ class Auth {
 				'permission_callback' => '__return_true',
 			)
 		);
+
+		register_rest_route(
+			$this->namespace,
+			'token/refresh',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'refresh_token' ),
+				'permission_callback' => '__return_true',
+			)
+		);
 	}
 
 	/**
@@ -92,8 +102,8 @@ class Auth {
 	public function add_cors_support() {
 		$enable_cors = defined( 'JWT_AUTH_CORS_ENABLE' ) ? JWT_AUTH_CORS_ENABLE : false;
 
-		if ( $enable_cors ) {
-			$headers = apply_filters( 'jwt_auth_cors_allow_headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization' );
+		if ( $enable_cors && !headers_sent() ) {
+			$headers = apply_filters( 'jwt_auth_cors_allow_headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization, Cookie' );
 
 			header( sprintf( 'Access-Control-Allow-Headers: %s', $headers ) );
 		}
@@ -143,16 +153,27 @@ class Auth {
 			return new WP_REST_Response(
 				array(
 					'success'    => false,
-					'statusCode' => 403,
+					'statusCode' => 500,
 					'code'       => 'jwt_auth_bad_config',
 					'message'    => __( 'JWT is not configured properly.', 'jwt-auth' ),
 					'data'       => array(),
 				),
-				403
+				500
 			);
 		}
 
-		$user = $this->authenticate_user( $username, $password, $custom_auth );
+		if ( isset( $_COOKIE['refresh_token'] ) ) {
+			$device  = $request->get_param( 'device' ) ?: '';
+			$user_id = $this->validate_refresh_token( $_COOKIE['refresh_token'], $device );
+
+			// If we receive a REST response, then validation failed.
+			if ( $user_id instanceof WP_REST_Response ) {
+				return $user_id;
+			}
+			$user = get_user_by( 'id', $user_id );
+		} else {
+			$user = $this->authenticate_user( $username, $password, $custom_auth );
+		}
 
 		// If the authentication is failed return error response.
 		if ( is_wp_error( $user ) ) {
@@ -161,21 +182,28 @@ class Auth {
 			return new WP_REST_Response(
 				array(
 					'success'    => false,
-					'statusCode' => 403,
+					'statusCode' => 401,
 					'code'       => $error_code,
 					'message'    => wp_strip_all_tags( $user->get_error_message( $error_code ) ),
 					'data'       => array(),
 				),
-				403
+				401
 			);
 		}
 
 		// Valid credentials, the user exists, let's generate the token.
-		return $this->generate_token( $user, false );
+		$response = $this->generate_token( $user, false );
+
+		// Add the refresh token as a HttpOnly cookie to the response.
+		if ( $username && $password ) {
+			$this->send_refresh_token( $user, $request );
+		}
+
+		return $response;
 	}
 
 	/**
-	 * Generate token
+	 * Generate access token.
 	 *
 	 * @param WP_User $user The WP_User object.
 	 * @param bool    $return_raw Whether or not to return as raw token string.
@@ -187,7 +215,7 @@ class Auth {
 		$issued_at  = time();
 		$not_before = $issued_at;
 		$not_before = apply_filters( 'jwt_auth_not_before', $not_before, $issued_at );
-		$expire     = $issued_at + ( DAY_IN_SECONDS * 7 );
+		$expire     = $issued_at + ( MINUTE_IN_SECONDS * 10 );
 		$expire     = apply_filters( 'jwt_auth_expire', $expire, $issued_at );
 
 		$payload = array(
@@ -234,6 +262,46 @@ class Auth {
 	}
 
 	/**
+	 * Sends a new refresh token.
+	 *
+	 * @param \WP_User $user The WP_User object.
+	 * @param \WP_REST_Request $request The request.
+	 *
+	 * @return void
+	 */
+	public function send_refresh_token( \WP_User $user, \WP_REST_Request $request ) {
+		$refresh_token = bin2hex( random_bytes( 32 ) );
+		$created       = time();
+		$expires       = $created + DAY_IN_SECONDS * 30;
+		$expires       = apply_filters( 'jwt_auth_refresh_expire', $expires, $created );
+
+		setcookie( 'refresh_token', $user->ID . '.' . $refresh_token, $expires, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
+
+		// Save new refresh token for the user, replacing the previous one.
+		// The refresh token is rotated for the passed device only, not affecting
+		// other devices.
+		$user_refresh_tokens = get_user_meta( $user->ID, 'jwt_auth_refresh_tokens', true );
+		if ( ! is_array( $user_refresh_tokens ) ) {
+			$user_refresh_tokens = array();
+		}
+		$device = $request->get_param( 'device' ) ?: '';
+		$user_refresh_tokens[ $device ] = array(
+			'token'   => $refresh_token,
+			'expires' => $expires,
+		);
+		update_user_meta( $user->ID, 'jwt_auth_refresh_tokens', $user_refresh_tokens );
+
+		// Store next expiry for cron_purge_expired_refresh_tokens event.
+		$expires_next = $expires;
+		foreach ( $user_refresh_tokens as $device ) {
+			if ( $device['expires'] < $expires_next ) {
+				$expires_next = $device['expires'];
+			}
+		}
+		update_user_meta( $user->ID, 'jwt_auth_refresh_tokens_expires_next', $expires_next );
+	}
+
+	/**
 	 * Get the token issuer.
 	 *
 	 * @return string The token issuer (iss).
@@ -270,8 +338,7 @@ class Auth {
 	}
 
 	/**
-	 * Main validation function, this function try to get the Autentication
-	 * headers and decoded.
+	 * Public token validation function based on Authorization header.
 	 *
 	 * @param bool $return_response Either to return full WP_REST_Response or to return the payload only.
 	 *
@@ -294,11 +361,12 @@ class Auth {
 			return new WP_REST_Response(
 				array(
 					'success'    => false,
-					'statusCode' => 403,
+					'statusCode' => 401,
 					'code'       => 'jwt_auth_no_auth_header',
 					'message'    => $this->messages['jwt_auth_no_auth_header'],
 					'data'       => array(),
-				)
+				),
+				401
 			);
 		}
 
@@ -312,11 +380,12 @@ class Auth {
 			return new WP_REST_Response(
 				array(
 					'success'    => false,
-					'statusCode' => 403,
+					'statusCode' => 401,
 					'code'       => 'jwt_auth_bad_auth_header',
 					'message'    => $this->messages['jwt_auth_bad_auth_header'],
 					'data'       => array(),
-				)
+				),
+				401
 			);
 		}
 
@@ -327,12 +396,12 @@ class Auth {
 			return new WP_REST_Response(
 				array(
 					'success'    => false,
-					'statusCode' => 403,
+					'statusCode' => 401,
 					'code'       => 'jwt_auth_bad_config',
 					'message'    => __( 'JWT is not configured properly.', 'jwt-auth' ),
 					'data'       => array(),
 				),
-				403
+				401
 			);
 		}
 
@@ -347,12 +416,12 @@ class Auth {
 				return new WP_REST_Response(
 					array(
 						'success'    => false,
-						'statusCode' => 403,
+						'statusCode' => 401,
 						'code'       => 'jwt_auth_bad_iss',
 						'message'    => __( 'The iss do not match with this server.', 'jwt-auth' ),
 						'data'       => array(),
 					),
-					403
+					401
 				);
 			}
 
@@ -362,12 +431,12 @@ class Auth {
 				return new WP_REST_Response(
 					array(
 						'success'    => false,
-						'statusCode' => 403,
+						'statusCode' => 401,
 						'code'       => 'jwt_auth_bad_request',
 						'message'    => __( 'User ID not found in the token.', 'jwt-auth' ),
 						'data'       => array(),
 					),
-					403
+					401
 				);
 			}
 
@@ -379,12 +448,12 @@ class Auth {
 				return new WP_REST_Response(
 					array(
 						'success'    => false,
-						'statusCode' => 403,
+						'statusCode' => 401,
 						'code'       => 'jwt_auth_user_not_found',
 						'message'    => __( "User doesn't exist", 'jwt-auth' ),
 						'data'       => array(),
 					),
-					403
+					401
 				);
 			}
 
@@ -396,12 +465,12 @@ class Auth {
 				return new WP_REST_Response(
 					array(
 						'success'    => false,
-						'statusCode' => 403,
+						'statusCode' => 401,
 						'code'       => 'jwt_auth_obsolete_token',
 						'message'    => __( 'Token is obsolete', 'jwt-auth' ),
 						'data'       => array(),
 					),
-					403
+					401
 				);
 			}
 
@@ -427,14 +496,97 @@ class Auth {
 			return new WP_REST_Response(
 				array(
 					'success'    => false,
-					'statusCode' => 403,
+					'statusCode' => 401,
 					'code'       => 'jwt_auth_invalid_token',
 					'message'    => $e->getMessage(),
 					'data'       => array(),
 				),
-				403
+				401
 			);
 		}
+	}
+
+	/**
+	 * Validates refresh token and generates a new refresh token.
+	 *
+	 * @param WP_REST_Request $request The request.
+	 * @return WP_REST_Response Returns WP_REST_Response.
+	 */
+	public function refresh_token( WP_REST_Request $request ) {
+		if ( ! isset( $_COOKIE['refresh_token'] ) ) {
+			return new WP_REST_Response(
+				array(
+					'success'    => false,
+					'statusCode' => 401,
+					'code'       => 'jwt_auth_no_auth_cookie',
+					'message'    => __( 'Refresh token cookie not found.', 'jwt-auth' ),
+				),
+				401
+			);
+		}
+		$device = $request->get_param( 'device' ) ?: '';
+
+		$user_id = $this->validate_refresh_token( $_COOKIE['refresh_token'], $device );
+		if ( $user_id instanceof WP_REST_Response ) {
+			return $user_id;
+		}
+
+		// Generate a new access token.
+		$user = get_user_by( 'id', $user_id );
+		$this->send_refresh_token( $user, $request );
+
+		$response = array(
+			'success'    => true,
+			'statusCode' => 200,
+			'code'       => 'jwt_auth_valid_token',
+			'message'    => __( 'Token is valid', 'jwt-auth' ),
+		);
+		return new WP_REST_Response( $response );
+	}
+
+	/**
+	 * Validates refresh token.
+	 *
+	 * @param string $refresh_token_cookie The refresh token to validate.
+	 * @param string $device The device of the refresh token.
+	 * @return int|WP_REST_Response Returns user ID if valid or WP_REST_Response on error.
+	 */
+	public function validate_refresh_token( $refresh_token_cookie, $device ) {
+		$parts = explode( '.', $refresh_token_cookie );
+		if ( count( $parts ) !== 2 || empty( intval( $parts[0] ) ) || empty( $parts[1] ) ) {
+			return new WP_REST_Response(
+				array(
+					'success'    => false,
+					'statusCode' => 401,
+					'code'       => 'jwt_auth_invalid_refresh_token',
+					'message'    => __( 'Invalid refresh token', 'jwt-auth' ),
+				),
+				401
+			);
+		}
+
+		// The refresh token must match the last issued refresh token for the passed
+		// device.
+		$user_id             = intval( $parts[0] );
+		$user_refresh_tokens = get_user_meta( $user_id, 'jwt_auth_refresh_tokens', true );
+		$refresh_token       = $parts[1];
+
+		if ( empty( $user_refresh_tokens[ $device ] ) ||
+			$user_refresh_tokens[ $device ]['token'] !== $refresh_token ||
+			$user_refresh_tokens[ $device ]['expires'] < time()
+			) {
+			return new WP_REST_Response(
+				array(
+					'success'    => false,
+					'statusCode' => 401,
+					'code'       => 'jwt_auth_obsolete_token',
+					'message'    => __( 'Token is obsolete', 'jwt-auth' ),
+				),
+				401
+			);
+		}
+
+		return $user_id;
 	}
 
 	/**
@@ -455,7 +607,8 @@ class Auth {
 
 		$valid_api_uri = strpos( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), $this->rest_api_slug );
 
-		if ( ! $valid_api_uri ) {
+		// Skip validation if not a REST API request or a user was determined already.
+		if ( ! $valid_api_uri || $user_id ) {
 			return $user_id;
 		}
 
@@ -471,111 +624,16 @@ class Auth {
 
 		$payload = $this->validate_token( false );
 
-		// If $payload is an error response, then return the default $user_id.
+		// If $payload is an error response, then the client did not send a token,
+		// or the token is invalid, the client uses a different way to authenticate,
+		// or the endpoint does not require authentication.
+		// Let the endpoint do its regular access checks.
 		if ( $this->is_error_response( $payload ) ) {
-			if ( 'jwt_auth_no_auth_header' === $payload->data['code'] ||
-				'jwt_auth_bad_auth_header' === $payload->data['code']
-			) {
-				$request_uri   = sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) );
-				$rest_api_slug = home_url( '/' . $this->rest_api_slug, 'relative' );
-
-				if ( $rest_api_slug . '/jwt-auth/v1/token' !== $request_uri ) {
-					// Whitelist some endpoints by default (without trailing * char).
-					$default_whitelist = array(
-						// WooCommerce namespace.
-						$rest_api_slug . '/wc/',
-						$rest_api_slug . '/wc-admin/',
-						$rest_api_slug . '/wc-auth/',
-						$rest_api_slug . '/wc-analytics/',
-
-						// WordPress namespace.
-						$rest_api_slug . '/wp/v2/',
-						$rest_api_slug . '/oembed/',
-					);
-
-					// Well, we let you adjust this default whitelist :).
-					$default_whitelist = apply_filters( 'jwt_auth_default_whitelist', $default_whitelist );
-
-					$is_ignored = false;
-
-					foreach ( $default_whitelist as $endpoint ) {
-						if ( false !== stripos( $request_uri, $endpoint ) ) {
-							$is_ignored = true;
-
-							break;
-						}
-					}
-
-					if ( ! $is_ignored ) {
-						if ( ! $this->is_whitelisted() ) {
-							$this->jwt_error = $payload;
-						}
-					}
-				}
-			} else {
-				$this->jwt_error = $payload;
-			}
-
 			return $user_id;
 		}
 
 		// Everything is ok here, return the user ID stored in the token.
 		return $payload->data->user->id;
-	}
-
-	/**
-	 * Check whether or not current endpoint is whitelisted.
-	 *
-	 * @return bool
-	 */
-	public function is_whitelisted() {
-		$whitelist = apply_filters( 'jwt_auth_whitelist', array() );
-
-		if ( empty( $whitelist ) || ! is_array( $whitelist ) ) {
-			return false;
-		}
-
-		$request_uri    = sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) );
-		$request_method = sanitize_text_field( wp_unslash( $_SERVER['REQUEST_METHOD'] ) );
-
-		$prefix      = get_option( 'permalink_structure' ) ? rest_get_url_prefix() : '?rest_route=/';
-		$split       = explode( $prefix, $request_uri );
-		$request_uri = '/' . $prefix . ( ( count( $split ) > 1 ) ? $split[1] : $split[0] );
-
-		// Only use string before "?" sign if permalink is enabled.
-		if ( get_option( 'permalink_structure' ) && false !== stripos( $request_uri, '?' ) ) {
-			$split       = explode( '?', $request_uri );
-			$request_uri = $split[0];
-		}
-
-		// Let's remove trailingslash for easier checking.
-		$request_uri = untrailingslashit( $request_uri );
-
-		foreach ( $whitelist as $endpoint ) {
-			if ( is_array( $endpoint ) ) {
-				$method = $endpoint['method'];
-				$path   = $endpoint['path'];
-			} else {
-				$method = null;
-				$path   = $endpoint;
-			}
-			// If the endpoint doesn't contain * sign.
-			if ( false === stripos( $path, '*' ) ) {
-				$path = untrailingslashit( $path );
-
-				if ( $path === $request_uri && ( ! isset( $method ) || $method === $request_method ) ) {
-					return true;
-				}
-			} else {
-				$regex = '/' . str_replace( '/', '\/', $path ) . '/';
-
-				if ( preg_match( $regex, $request_uri ) && ( ! isset( $method ) || $method === $request_method ) ) {
-					return true;
-				}
-			}
-		}
-
-		return false;
 	}
 
 	/**
