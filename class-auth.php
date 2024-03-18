@@ -283,7 +283,7 @@ class Auth {
 
 		$flow = $this->get_flow();
 
-		if ( 'parameter' === $flow ) {
+		if ( 'body' === $flow ) {
 
 		} else {
 			// Send the refresh token as a HttpOnly cookie in the response.
@@ -297,7 +297,7 @@ class Auth {
 		if ( ! is_array( $user_refresh_tokens ) ) {
 			$user_refresh_tokens = array();
 		}
-		$device                         = empty($payload->data->device) ? '' : $payload->data->device;
+		$device                         = empty( $payload->data->device ) ? '' : $payload->data->device;
 		$user_refresh_tokens[ $device ] = array(
 			'token'   => $refresh_token,
 			'expires' => $payload->exp,
@@ -414,11 +414,11 @@ class Auth {
 		 * return the user.
 		 */
 		$headerkey = apply_filters( 'jwt_auth_authorization_header', 'HTTP_AUTHORIZATION' );
-		$auth      = empty($_SERVER[ $headerkey ]) ? false : $_SERVER[ $headerkey ];
+		$auth      = empty( $_SERVER[ $headerkey ] ) ? false : $_SERVER[ $headerkey ];
 
 		// Double check for different auth header string (server dependent).
 		if ( ! $auth ) {
-			$auth = empty($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) ? false : $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+			$auth = empty( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) ? false : $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
 		}
 
 		if ( ! $auth ) {
@@ -845,7 +845,7 @@ class Auth {
 	private function retrieve_refresh_token( WP_REST_Request $request ): ?string {
 		$flow = $this->get_flow();
 
-		if ( 'parameter' === $flow ) {
+		if ( 'body' === $flow || 'query' === $flow || 'parameter' === $flow ) {
 			return $request->get_param( 'refresh_token' );
 		}
 
