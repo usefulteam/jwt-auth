@@ -217,8 +217,10 @@ class Auth {
 		$issued_at  = time();
 		$not_before = $issued_at;
 		$not_before = apply_filters( 'jwt_auth_not_before', $not_before, $issued_at );
+		$not_before = apply_filters( 'jwt_auth_token_not_before', $not_before, $issued_at );
 		$expire     = $issued_at + ( MINUTE_IN_SECONDS * 10 );
 		$expire     = apply_filters( 'jwt_auth_expire', $expire, $issued_at );
+		$expire     = apply_filters( 'jwt_auth_token_expire', $expire, $issued_at );
 
 		$payload = array(
 			'iss'  => $this->get_iss(),
@@ -324,16 +326,18 @@ class Auth {
 	 */
 	public function generate_refresh_token( \WP_User $user, \WP_REST_Request $request ) {
 		$secret_key = defined( 'JWT_AUTH_SECRET_KEY' ) ? JWT_AUTH_SECRET_KEY : false;
-		$created    = time();
-		$expires    = $created + DAY_IN_SECONDS * 30;
-		$expires    = apply_filters( 'jwt_auth_refresh_expire', $expires, $created );
+		$issued_at  = time();
+		$not_before = $issued_at;
+		$not_before = apply_filters( 'jwt_auth_refresh_not_before', $not_before, $issued_at );
+		$expires    = $issued_at + DAY_IN_SECONDS * 30;
+		$expires    = apply_filters( 'jwt_auth_refresh_expire', $expires, $issued_at );
 
 		$device = $request->get_param( 'device' ) ?: '';
 
 		$payload = array(
 			'iss'  => $this->get_iss(),
-			'iat'  => $created,
-			'nbf'  => $created,
+			'iat'  => $issued_at,
+			'nbf'  => $not_before,
 			'exp'  => $expires,
 			'data' => array(
 				'device' => $device,
