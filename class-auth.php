@@ -283,9 +283,7 @@ class Auth {
 
 		$flow = $this->get_flow();
 
-		if ( 'body' === $flow ) {
-
-		} else {
+		if ( 'cookie' === $flow ) {
 			// Send the refresh token as a HttpOnly cookie in the response.
 			setcookie( 'refresh_token', $refresh_token, $payload->exp, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
 		}
