@@ -843,10 +843,12 @@ class Auth {
 	private function retrieve_refresh_token( WP_REST_Request $request ): ?string {
 		$flow = $this->get_flow();
 
-		if ( 'body' === $flow || 'query' === $flow || 'parameter' === $flow ) {
-			return $request->get_param( 'refresh_token' );
+		if ( 'cookie' === $flow ) {
+			$refresh_token = isset($_COOKIE['refresh_token']) ? $_COOKIE['refresh_token'] : null;
+		} else {
+			$refresh_token = $request->get_param( 'refresh_token' );
 		}
 
-		return $_COOKIE['refresh_token'] ?? null;
+		return apply_filters( 'jwt_auth_retrieve_refresh_token', $refresh_token, $request, $flow );
 	}
 }
