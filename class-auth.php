@@ -10,6 +10,7 @@ namespace JWTAuth;
 use Exception;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Psr\Log\LoggerInterface;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -48,15 +49,26 @@ class Auth {
 	private $rest_api_slug = 'wp-json';
 
 	/**
-	 * Setup action & filter hooks.
+	 * The logger interface to use
+	 *
+	 * @var LoggerInterface
 	 */
-	public function __construct() {
+	private $logger;
+
+	/**
+	 * Setup action & filter hooks.
+	 *
+	 * @param LoggerInterface $logger The logger interface to use.
+	 */
+	public function __construct( LoggerInterface $logger ) {
 		$this->namespace = 'jwt-auth/v1';
 
 		$this->messages = array(
 			'jwt_auth_no_auth_header'  => __( 'Authorization header not found.', 'jwt-auth' ),
 			'jwt_auth_bad_auth_header' => __( 'Authorization header malformed.', 'jwt-auth' ),
 		);
+
+		$this->logger = $logger;
 	}
 
 	/**
