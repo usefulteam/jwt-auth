@@ -223,6 +223,7 @@ class Auth {
 		$expire     = apply_filters( 'jwt_auth_token_expire', $expire, $issued_at );
 
 		$payload = array(
+			'type' => 'access_token',
 			'iss'  => $this->get_iss(),
 			'iat'  => $issued_at,
 			'nbf'  => $not_before,
@@ -333,6 +334,7 @@ class Auth {
 		$device = $request->get_param( 'device' ) ?: '';
 
 		$payload = array(
+			'type' => 'refresh',
 			'iss'  => $this->get_iss(),
 			'iat'  => $issued_at,
 			'nbf'  => $not_before,
@@ -405,7 +407,6 @@ class Auth {
 	 */
 	public function validate_token( $return_response_or_request = true ) {
 		$return_response = $return_response_or_request instanceof WP_REST_Request ? true : $return_response_or_request;
-		$request         = $return_response_or_request instanceof WP_REST_Request ? $return_response_or_request : null;
 
 		/**
 		 * Looking for the HTTP_AUTHORIZATION header, if not present just
@@ -485,6 +486,10 @@ class Auth {
 					),
 					401
 				);
+			}
+
+			if ( $payload->type !== 'access_token' ) {
+				throw new Exception( __( 'Invalid token type', 'jwt-auth' ) );
 			}
 
 			// Check the user id existence in the token.
@@ -577,9 +582,9 @@ class Auth {
 	 */
 	public function refresh_token( \WP_REST_Request $request ) {
 
-		$refresh_token = $this->retrieve_refresh_token();
+		$input_refresh_token = $this->retrieve_refresh_token();
 
-		if ( empty( $refresh_token ) ) {
+		if ( empty( $input_refresh_token ) ) {
 			return new WP_REST_Response(
 				array(
 					'success'    => false,
@@ -670,6 +675,10 @@ class Auth {
 				);
 			}
 
+			if ( $payload->type !== 'refresh_token' ) {
+				throw new Exception( __( 'Invalid token type', 'jwt-auth' ) );
+			}
+
 			// Check the user id existence in the token.
 			if ( ! isset( $payload->data->user->id ) ) {
 				// No user id in the token, abort!!
@@ -702,20 +711,29 @@ class Auth {
 				);
 			}
 
-			// The refresh token must match the last issued refresh token for the passed
-			// device.
-			$user_id             = $payload->data->user->id;
-			$user_refresh_tokens = get_user_meta( $user_id, 'jwt_auth_refresh_tokens', true );
-
 			if ( ! isset( $payload->data->device ) ) {
 				// Throw invalid token response
 				throw new Exception( __( 'Device not found in the refresh token.', 'jwt-auth' ) );
 			}
 
-			if ( empty( $user_refresh_tokens[ $payload->data->device ] ) ||
-			     $user_refresh_tokens[ $payload->data->device ]['token'] !== $refresh_token ||
-			     $user_refresh_tokens[ $payload->data->device ]['expires'] < time()
-			) {
+			// The refresh token must match the last issued refresh token for the passed
+			// device.
+			$user_id             = $payload->data->user->id;
+			$user_refresh_tokens = get_user_meta( $user_id, 'jwt_auth_refresh_tokens', true );
+
+			if ( ! is_array( $user_refresh_tokens ) ) {
+				$user_refresh_tokens = array();
+			}
+
+			$device                    = empty( $payload->data->device ) ? '' : $payload->data->device;
+			$last_refresh_token_issued = $user_refresh_tokens[ $device ] ?? null;
+
+			if ( empty( $last_refresh_token_issued ) || $last_refresh_token_issued['token'] !== $refresh_token ) {
+				// The refresh token do not match, return error.
+				throw new Exception( __( 'Refresh token not found for the device.', 'jwt-auth' ) );
+			}
+
+			if ( $last_refresh_token_issued['expires'] < time() ) {
 				return new WP_REST_Response(
 					array(
 						'success'    => false,
