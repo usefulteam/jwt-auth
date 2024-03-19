@@ -57,7 +57,7 @@ trait RestTestTrait {
 	protected function setUp(): void {
 		$this->cookies = new CookieJar();
 		$options       = [
-			'base_uri'         => $_ENV['TEST_URL'],
+			'base_uri'         => $_ENV['URL'],
 			'http_errors'      => false,
 			'cookies'          => $this->cookies,
 			// PHP's cURL library attempts to resolve domains with IPv6, causing a
@@ -79,9 +79,9 @@ trait RestTestTrait {
 			$options['debug'] = true;
 		}
 		$this->client   = new Client( $options );
-		$this->username = $_ENV['TEST_USERNAME'];
-		$this->password = $_ENV['TEST_PASSWORD'];
-		$this->flow     = $_ENV['TEST_FLOW'];
+		$this->username = $_ENV['USERNAME'];
+		$this->password = $_ENV['PASSWORD'];
+		$this->flow     = $_ENV['FLOW'];
 	}
 
 	protected function setCookie( $name, $value, $domain ): CookieJar {
