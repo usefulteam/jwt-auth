@@ -183,8 +183,10 @@ class Auth {
 				return $payload;
 			}
 			$user = get_user_by( 'id', $payload->data->user->id );
+			$device = $payload->data->device;
 		} else {
 			$user = $this->authenticate_user( $username, $password, $custom_auth );
+			$device = $request->get_param( 'device' ) ? $request->get_param( 'device' ) : '';
 		}
 
 		// If the authentication is failed return error response.
@@ -208,7 +210,7 @@ class Auth {
 
 		// Add the refresh token as a HttpOnly cookie to the response.
 		if ( $username && $password ) {
-			$refresh_token = $this->send_refresh_token( $user, $request );
+			$refresh_token = $this->send_refresh_token( $user, $device );
 		}
 
 		$response['data']['refresh_token'] = $refresh_token;
@@ -282,19 +284,18 @@ class Auth {
 	 * Sends a new refresh token.
 	 *
 	 * @param \WP_User $user The WP_User object.
-	 * @param \WP_REST_Request $request The request.
+	 * @param string $device Device name. Default empty string
 	 *
 	 * @return string
 	 */
-	public function send_refresh_token( \WP_User $user, \WP_REST_Request $request ) {
+	public function send_refresh_token( \WP_User $user, string $device = ''): string {
 		$secret_key    = defined( 'JWT_AUTH_SECRET_KEY' ) ? JWT_AUTH_SECRET_KEY : false;
-		$refresh_token = $this->generate_refresh_token( $user, $request );
+		$refresh_token = $this->generate_refresh_token( $user, $device );
 
 		$alg = $this->get_alg();
+		$flow = $this->get_flow();
 
 		$payload = JWT::decode( $refresh_token, new Key( $secret_key, $alg ) );
-
-		$flow = $this->get_flow();
 
 		if ( 'cookie' === $flow ) {
 			// Send the refresh token as a HttpOnly cookie in the response.
@@ -308,7 +309,7 @@ class Auth {
 		if ( ! is_array( $user_refresh_tokens ) ) {
 			$user_refresh_tokens = array();
 		}
-		$device                         = empty( $payload->data->device ) ? '' : $payload->data->device;
+
 		$user_refresh_tokens[ $device ] = array(
 			'token'   => $refresh_token,
 			'expires' => $payload->exp,
@@ -331,19 +332,17 @@ class Auth {
 	 * Generate a new refresh token.
 	 *
 	 * @param \WP_User $user The WP_User object.
-	 * @param \WP_REST_Request $request The request.
+	 * @param string $device Device name. Default empty string
 	 *
 	 * @return string
 	 */
-	public function generate_refresh_token( \WP_User $user, \WP_REST_Request $request ) {
+	public function generate_refresh_token( \WP_User $user, string $device = '' ): string {
 		$secret_key = defined( 'JWT_AUTH_SECRET_KEY' ) ? JWT_AUTH_SECRET_KEY : false;
 		$issued_at  = time();
 		$not_before = $issued_at;
 		$not_before = apply_filters( 'jwt_auth_refresh_not_before', $not_before, $issued_at );
 		$expires    = $issued_at + DAY_IN_SECONDS * 30;
 		$expires    = apply_filters( 'jwt_auth_refresh_expire', $expires, $issued_at );
-
-		$device = $request->get_param( 'device' ) ?: '';
 
 		$payload = array(
 			'typ' => 'refresh',
@@ -615,8 +614,7 @@ class Auth {
 
 		// Generate a new access token.
 		$user = get_user_by( 'id', $payload->data->user->id );
-		$request->set_param( 'device', $payload->data->device );
-		$refresh_token = $this->send_refresh_token( $user, $request );
+		$refresh_token = $this->send_refresh_token( $user, $payload->data->device );
 
 		$flow = $this->get_flow();
 
@@ -898,4 +896,5 @@ class Auth {
 
 		return apply_filters( 'jwt_auth_retrieve_refresh_token', $refresh_token, $flow );
 	}
+
 }
