@@ -237,7 +237,7 @@ class Auth {
 		$expire     = apply_filters( 'jwt_auth_token_expire', $expire, $issued_at );
 
 		$payload = array(
-			'typ' => 'access',
+			'typ'  => 'access',
 			'iss'  => $this->get_iss(),
 			'iat'  => $issued_at,
 			'nbf'  => $not_before,
@@ -251,8 +251,13 @@ class Auth {
 
 		$alg = $this->get_alg();
 
+		$payload = apply_filters( 'jwt_auth_payload', $payload, $user );
+
+		// Make sure to not lose type property
+		$payload['typ'] = 'access';
+
 		// Let the user modify the token data before the sign.
-		$token = JWT::encode( apply_filters( 'jwt_auth_payload', $payload, $user ), $secret_key, $alg );
+		$token = JWT::encode( $payload, $secret_key, $alg );
 
 		// If return as raw token string.
 		if ( $return_raw ) {
@@ -345,7 +350,7 @@ class Auth {
 		$expires    = apply_filters( 'jwt_auth_refresh_expire', $expires, $issued_at );
 
 		$payload = array(
-			'typ' => 'refresh',
+			'typ'  => 'refresh',
 			'iss'  => $this->get_iss(),
 			'iat'  => $issued_at,
 			'nbf'  => $not_before,
@@ -360,7 +365,12 @@ class Auth {
 
 		$alg = $this->get_alg();
 
-		return JWT::encode( apply_filters( 'jwt_auth_refresh_token_payload', $payload, $user ), $secret_key, $alg );
+		$payload = apply_filters( 'jwt_auth_refresh_token_payload', $payload, $user );
+
+		// Make sure to not lose type property
+		$payload['typ'] = 'refresh';
+
+		return JWT::encode( $payload, $secret_key, $alg );
 	}
 
 	/**
