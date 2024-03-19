@@ -601,17 +601,26 @@ class Auth {
 		$request->set_param( 'device', $payload->data->device );
 		$refresh_token = $this->send_refresh_token( $user, $request );
 
+		$flow = $this->get_flow();
+
+		$additional_fields = array();
+
+		if ( $flow !== 'cookie' ) {
+			$additional_fields = array(
+				'data' => array(
+					'refresh_token' => $refresh_token,
+				),
+			);
+		}
+
 		$response = array(
 			'success'    => true,
 			'statusCode' => 200,
 			'code'       => 'jwt_auth_valid_token',
 			'message'    => __( 'Token is valid', 'jwt-auth' ),
-			'data'       => array(
-				'refresh_token' => $refresh_token,
-			),
 		);
 
-		return new WP_REST_Response( $response );
+		return new WP_REST_Response( array_merge( $response, $additional_fields ) );
 	}
 
 	/**
@@ -850,7 +859,7 @@ class Auth {
 		} else if ( 'query' === $flow ) {
 			$_array = $_REQUEST;
 		} else if ( 'header' === $flow ) {
-			$_array = getallheaders() ? : array();
+			$_array = getallheaders() ?: array();
 		} else { // default cookie
 			$_array = $_COOKIE;
 		}
