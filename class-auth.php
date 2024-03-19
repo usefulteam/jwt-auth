@@ -182,10 +182,10 @@ class Auth {
 			if ( $payload instanceof WP_REST_Response ) {
 				return $payload;
 			}
-			$user = get_user_by( 'id', $payload->data->user->id );
+			$user   = get_user_by( 'id', $payload->data->user->id );
 			$device = $payload->data->device;
 		} else {
-			$user = $this->authenticate_user( $username, $password, $custom_auth );
+			$user   = $this->authenticate_user( $username, $password, $custom_auth );
 			$device = $request->get_param( 'device' ) ? $request->get_param( 'device' ) : '';
 		}
 
@@ -293,11 +293,11 @@ class Auth {
 	 *
 	 * @return string
 	 */
-	public function send_refresh_token( \WP_User $user, string $device = ''): string {
+	public function send_refresh_token( \WP_User $user, string $device = '' ): string {
 		$secret_key    = defined( 'JWT_AUTH_SECRET_KEY' ) ? JWT_AUTH_SECRET_KEY : false;
 		$refresh_token = $this->generate_refresh_token( $user, $device );
 
-		$alg = $this->get_alg();
+		$alg  = $this->get_alg();
 		$flow = $this->get_flow();
 
 		$payload = JWT::decode( $refresh_token, new Key( $secret_key, $alg ) );
@@ -323,9 +323,9 @@ class Auth {
 
 		// Store next expiry for cron_purge_expired_refresh_tokens event.
 		$expires_next = $payload->exp;
-		foreach ( $user_refresh_tokens as $device ) {
-			if ( $device['expires'] < $expires_next ) {
-				$expires_next = $device['expires'];
+		foreach ( $user_refresh_tokens as $user_refresh_token ) {
+			if ( $user_refresh_token['expires'] < $expires_next ) {
+				$expires_next = $user_refresh_token['expires'];
 			}
 		}
 		update_user_meta( $user->ID, 'jwt_auth_refresh_tokens_expires_next', $expires_next );
@@ -623,8 +623,9 @@ class Auth {
 		}
 
 		// Generate a new access token.
-		$user = get_user_by( 'id', $payload->data->user->id );
-		$refresh_token = $this->send_refresh_token( $user, $payload->data->device );
+		$user          = get_user_by( 'id', $payload->data->user->id );
+		$device        = $payload->data->device;
+		$refresh_token = $this->send_refresh_token( $user, $device );
 
 		$flow = $this->get_flow();
 
@@ -748,12 +749,9 @@ class Auth {
 			$device                    = empty( $payload->data->device ) ? '' : $payload->data->device;
 			$last_refresh_token_issued = $user_refresh_tokens[ $device ] ?? null;
 
-			if ( empty( $last_refresh_token_issued ) || $last_refresh_token_issued['token'] !== $refresh_token ) {
-				// The refresh token do not match, return error.
-				throw new Exception( __( 'Refresh token not found for the device.', 'jwt-auth' ) );
-			}
-
-			if ( $last_refresh_token_issued['expires'] < time() ) {
+			if ( empty( $last_refresh_token_issued ) ||
+			     $last_refresh_token_issued['token'] !== $refresh_token ||
+			     $last_refresh_token_issued['expires'] < time() ) {
 				return new WP_REST_Response(
 					array(
 						'success'    => false,
