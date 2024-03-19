@@ -699,6 +699,11 @@ class Auth {
 			$user_id             = $payload->data->user->id;
 			$user_refresh_tokens = get_user_meta( $user_id, 'jwt_auth_refresh_tokens', true );
 
+			if ( ! isset( $payload->data->device ) ) {
+				// Throw invalid token response
+				throw new Exception( __( 'Device not found in the refresh token.', 'jwt-auth' ) );
+			}
+
 			if ( empty( $user_refresh_tokens[ $payload->data->device ] ) ||
 			     $user_refresh_tokens[ $payload->data->device ]['token'] !== $refresh_token ||
 			     $user_refresh_tokens[ $payload->data->device ]['expires'] < time()
