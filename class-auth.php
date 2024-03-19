@@ -235,7 +235,7 @@ class Auth {
 		$expire     = apply_filters( 'jwt_auth_token_expire', $expire, $issued_at );
 
 		$payload = array(
-			'type' => 'access_token',
+			'typ' => 'access',
 			'iss'  => $this->get_iss(),
 			'iat'  => $issued_at,
 			'nbf'  => $not_before,
@@ -346,7 +346,7 @@ class Auth {
 		$device = $request->get_param( 'device' ) ?: '';
 
 		$payload = array(
-			'type' => 'refresh',
+			'typ' => 'refresh',
 			'iss'  => $this->get_iss(),
 			'iat'  => $issued_at,
 			'nbf'  => $not_before,
@@ -500,7 +500,7 @@ class Auth {
 				);
 			}
 
-			if ( $payload->type !== 'access_token' ) {
+			if ( ! isset( $payload->typ ) || $payload->typ !== 'access' ) {
 				throw new Exception( __( 'Invalid token type', 'jwt-auth' ) );
 			}
 
@@ -687,7 +687,7 @@ class Auth {
 				);
 			}
 
-			if ( $payload->type !== 'refresh_token' ) {
+			if ( ! isset( $payload->typ ) || $payload->typ !== 'refresh' ) {
 				throw new Exception( __( 'Invalid token type', 'jwt-auth' ) );
 			}
 

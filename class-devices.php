@@ -121,6 +121,7 @@ class Devices {
 	 * Sanitize the device name.
 	 *
 	 * @param string $device The device name.
+	 *
 	 * @return string The sanitized device name.
 	 */
 	private function sanitize_device_name( $device ) {
@@ -202,6 +203,7 @@ class Devices {
 	 * Sanitize the device key.
 	 *
 	 * @param string $key The device key.
+	 *
 	 * @return string The sanitized device key.
 	 */
 	private function sanitize_device_key( $key ) {
