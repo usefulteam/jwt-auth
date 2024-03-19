@@ -30,7 +30,6 @@ trait RestTestTrait {
 
 	/**
 	 * @var string
-
 	 */
 	protected $username;
 
@@ -72,7 +71,7 @@ trait RestTestTrait {
 			// - Listen to any IP: "<VirtualHost *:80>"
 			'force_ip_resolve' => 'v4',
 			'curl'             => [
-				113 => 1,
+				CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
 			],
 		];
 		if ( in_array( '--debug', $_SERVER['argv'], true ) ) {
