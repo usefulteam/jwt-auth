@@ -15,6 +15,7 @@
       <env name="URL" value="http://localhost" />
       <env name="USERNAME" value="admin" />
       <env name="PASSWORD" value="password" />
+      <env name="FLOW" value="cookie" />
     </php>
 
     <!-- Filter for coverage reports. -->

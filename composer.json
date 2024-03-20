@@ -15,10 +15,12 @@
     ],
     "minimum-stability": "stable",
     "require": {
-        "firebase/php-jwt": "^6.3"
+        "firebase/php-jwt": "^6.3",
+        "psr/log": "^3.0"
     },
     "require-dev": {
         "php": ">=7.4",
+        "ext-curl": "*",
         "phpunit/phpunit": "^9.5",
         "guzzlehttp/guzzle": "^7.4"
     },
