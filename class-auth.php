@@ -173,10 +173,10 @@ class Auth {
 			);
 		}
 
-		$refresh_token = $this->retrieve_refresh_token();
+		$refresh_token = $this->retrieve_refresh_token( $request );
 
 		if ( ! empty( $refresh_token ) ) {
-			$payload = $this->validate_refresh_token( false );
+			$payload = $this->validate_refresh_token( $refresh_token, false );
 
 			// If we receive a REST response, then validation failed.
 			if ( $payload instanceof WP_REST_Response ) {
@@ -603,7 +603,7 @@ class Auth {
 	 */
 	public function refresh_token( \WP_REST_Request $request ) {
 
-		$input_refresh_token = $this->retrieve_refresh_token();
+		$input_refresh_token = $this->retrieve_refresh_token( $request );
 
 		if ( empty( $input_refresh_token ) ) {
 			return new WP_REST_Response(
@@ -617,7 +617,7 @@ class Auth {
 			);
 		}
 
-		$payload = $this->validate_refresh_token( false );
+		$payload = $this->validate_refresh_token( $input_refresh_token, false );
 		if ( $payload instanceof WP_REST_Response ) {
 			return $payload;
 		}
@@ -652,13 +652,12 @@ class Auth {
 	/**
 	 * Validates refresh token.
 	 *
+	 * @param string $refresh_token The refresh token.
 	 * @param bool $return_response Either to return full WP_REST_Response or to return the payload only.
 	 *
 	 * @return \stdClass|WP_REST_Response Returns user ID if valid or WP_REST_Response on error.
 	 */
-	public function validate_refresh_token( $return_response = true ) {
-
-		$refresh_token = $this->retrieve_refresh_token();
+	public function validate_refresh_token( $refresh_token, $return_response = true ) {
 
 		// Get the Secret Key.
 		$secret_key = defined( 'JWT_AUTH_SECRET_KEY' ) ? JWT_AUTH_SECRET_KEY : false;
@@ -885,17 +884,19 @@ class Auth {
 	/**
 	 * Retrieves the refresh token based on a flow
 	 *
+	 * @param WP_REST_Request $request
+	 *
 	 * @return string|null
 	 */
-	private function retrieve_refresh_token(): ?string {
+	private function retrieve_refresh_token( WP_REST_Request $request ): ?string {
 		$flow = $this->get_flow();
 
 		if ( 'body' === $flow ) {
-			$_array = $_POST;
+			$_array = $request->get_json_params();
 		} else if ( 'query' === $flow ) {
-			$_array = $_REQUEST;
+			$_array = $request->get_query_params();
 		} else if ( 'header' === $flow ) {
-			$_array = getallheaders() ?: array();
+			$_array = $request->get_headers();
 		} else { // default cookie
 			$_array = $_COOKIE;
 		}
