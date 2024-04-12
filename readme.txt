@@ -747,6 +747,9 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 3. Other error responses
 
 == Changelog ==
+= 3.0.2 =
+- New Feature: Added support for different flow
+
 = 3.0.1 =
 - Updated firebase/php-jwt to 6.3 to address security issue in versions prior to 6.x.
 
