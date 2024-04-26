@@ -778,13 +778,13 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 - Breaking change: Removed whitelist. To retain similar functionality, install a separate plugin, such as https://wordpress.org/plugins/disable-rest-api-and-require-jwt-oauth-authentication/
 
 = 2.1.6 =
-- Added automated asset updates from GitHub
+- Added automated asset updates from GitHub.
 
 = 2.1.5 =
-- Removed dev and build files from distribution
+- Removed dev and build files from distribution.
 
 = 2.1.4 =
-- Added update warning and information relevant to updating to version 3.x+
+- Added update warning and information relevant to updating to version 3.
 
 = 2.1.3 =
 - Fix some missing composer files in 2.1.2.
