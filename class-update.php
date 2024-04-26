@@ -12,7 +12,7 @@ namespace JWTAuth;
  *
  * @author Dominic Vermeulen-Smith https://github.com/dominic-ks
  */
-class Plugin_Updates {
+class Update {
 
 	/**
 	 * Setup action & filter hooks.

@@ -28,6 +28,6 @@ require __DIR__ . '/vendor/autoload.php';
 require __DIR__ . '/class-auth.php';
 require __DIR__ . '/class-setup.php';
 require __DIR__ . '/class-devices.php';
-require __DIR__ . '/class-plugin-update.php';
+require __DIR__ . '/class-update.php';
 
 JWTAuth\Setup::getInstance();

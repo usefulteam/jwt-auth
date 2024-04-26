@@ -43,7 +43,7 @@ class Setup {
 
 		// add plugin updates class and filters only in wp-admin
 		if ( is_admin() ) {
-			$this->updates = new Plugin_Updates();
+			$this->updates = new Update();
 		}
 
 
