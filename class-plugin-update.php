@@ -46,7 +46,7 @@ class Plugin_Updates {
 
 		<div style="color: #f00;"><?php echo __( 'IMPORTANT! Please read before updating:', 'jwt-auth' ); ?></div>
 		<div style="font-weight: normal; overflow:auto">
-			<?php echo __( 'V' . $plugin_data['new_version'] . ' of the JWT Auth plugin contains major new features that will change the behaviour of your site.', 'jwt-auth' ); ?> 
+			<?php echo __( 'JWT Auth plugin version 3 contains major new features that will change the behaviour of your site.', 'jwt-auth' ); ?> 
 			<?php echo __( 'Please review the details of the new version before updating.', 'jwt-auth' ); ?> 
 			<br /><br />
 			<?php echo __( 'More information can be found on <a href="https://wordpress.org/plugins/jwt-auth/" target="_blank">the plugin page on WordPress.org</a>.', 'jwt-auth' ); ?>
