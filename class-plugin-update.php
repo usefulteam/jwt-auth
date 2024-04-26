@@ -9,7 +9,8 @@ namespace JWTAuth;
 
 /**
  * Manage activities related to plugin updates.
- * Added by Dominic Vermeulen-Smith https://github.com/dominic-ks
+ *
+ * @author Dominic Vermeulen-Smith https://github.com/dominic-ks
  */
 class Plugin_Updates {
 
