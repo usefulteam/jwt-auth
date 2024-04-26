@@ -20,30 +20,23 @@ WordPress JSON Web Token Authentication allows you to do REST API authentication
 
 ## Upgrading to v3
 
-[The latest version](https://github.com/usefulteam/jwt-auth/) of this plugin will soon be released on the WordPress.org plugin repo.
+When updating from v2 to v3, familiarise yourself with its changes to ensure that your site continues to work as expected:
 
-If you are updating from V2.x to V3.x you should familiarise yourself with the upcoming changes to ensure that your site continues to work as you expect it to.
-
-There are two imoportant changes:
-
-= Introduction of refresh tokens =
-
-[See this section of the readme on GitHub](https://github.com/usefulteam/jwt-auth#refreshing-the-access-token)
+= New: Refresh tokens ([docs](https://github.com/usefulteam/jwt-auth#refreshing-the-access-token)) =
 
 Key changes:
 
-- Default JWT expiry time will reduce from 7 days to 10 minutes.
-- On expiry of a JWT, your client will need to manage getting a new token using the [refresh token process described here](https://github.com/usefulteam/jwt-auth#refreshing-the-access-token).
-- If you would prefer to retain the 7 day expiry time initially or permanently, you can use the `jwt_auth_expire` hook as documented on this page to force the expiry time to remain at 7 days.
+- Default JWT access token expiry time has been reduced from 7 days to 10 minutes.
+- On expiry of a JWT, clients need to retrieve a new access token using the [refresh token as described here](https://github.com/usefulteam/jwt-auth#refreshing-the-access-token).
+- To retain the 7 day expiry time, use the hook `jwt_auth_expire`.
 
-= Removal of the URL whitelist and related filter =
+= Removed Whitelist =
 
 Key changes:
 
-- Users of this plugin will no longer need to whitelist the REST paths from other plugins using the  `jwt_auth_whitelist` as documented on this page.
-- Instead, custom API routes should have the permissions requirement coded via the [permissions callback](https://developer.wordpress.org/rest-api/extending-the-rest-api/adding-custom-endpoints/#permissions-callback) of the REST API route when it is registered.
-- This means that if a route requires authentication, any authentication method can be used and should reduce conflicts between this and other plugins.
-- For further information please see [this discussion](https://github.com/usefulteam/jwt-auth/pull/60) on GitHub.
+- You no longer need to whitelist REST paths from other plugins with the hook `jwt_auth_whitelist`. You can remove the hook.
+- Instead, custom REST API routes should have access requirements specified with the [permissions callback](https://developer.wordpress.org/rest-api/extending-the-rest-api/adding-custom-endpoints/#permissions-callback) when it is registered.
+- This means that if a route requires authentication, any authentication method can be used and this should reduce conflicts between this and other plugins. See [this discussion](https://github.com/usefulteam/jwt-auth/pull/60) for further information.
 
 ## Enable PHP HTTP Authorization Header
 
