@@ -31,11 +31,8 @@ class Plugin_Updates {
 	 */
 	public function display_update_warnings( $plugin_data , $response ) {
 
-		$new_version = explode( '.' , $plugin_data['new_version'] );
-		$old_version = explode( '.' , $plugin_data['Version'] );
-
-    // Only display warning if updating from 2.x to 3.x.
-		if( intval( $old_version[0] ) >= 3 || intval( $new_version[0] ) < 3 ) {
+		// Only display warning if updating from 2.x to 3.x.
+		if ( version_compare( $plugin_data['Version'], '3.0', '>=' ) || version_compare( $plugin_data['new_version'], '3.0', '<' ) ) {
 			return;
 		}
 
