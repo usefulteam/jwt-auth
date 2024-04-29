@@ -18,8 +18,8 @@ class Devices {
 	 */
 	public function __construct() {
 
-		add_action( 'show_user_profile', array( $this, 'custom_user_profile_fields' ), 10, 1 ); //hook when user edit yourself
-		add_action( 'edit_user_profile', array( $this, 'custom_user_profile_fields' ), 10, 1 ); //hooke when user edit another user
+		add_action( 'show_user_profile', array( $this, 'custom_user_profile_fields' ) );
+		add_action( 'edit_user_profile', array( $this, 'custom_user_profile_fields' ) );
 
 		add_action( 'wp_ajax_remove_device', array( $this, 'remove_device' ) );
 		add_shortcode( 'jwt_auth_devices', array( $this, 'shortcode_jwt_auth_devices' ) );
@@ -309,12 +309,12 @@ class Devices {
 	 *
 	 * @param WP_User $profileuser The current WP_User object.
 	 */
-	public function custom_user_profile_fields( $profileuser ) {
+	public function custom_user_profile_fields( $profile_user ) {
 
 		?>
 		<h2><?php echo __( 'Connected Devices', 'jwt-auth' ); ?></h2>
 		<div id="jwt_auth_devices" style="width:33%">
-			<?php echo do_shortcode( '[jwt_auth_devices user_id=' . $profileuser->ID . ']' ); ?>
+			<?php echo do_shortcode( '[jwt_auth_devices user_id=' . $profile_user->ID . ']' ); ?>
 		</div>
 		<?php
 
