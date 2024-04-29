@@ -3,6 +3,7 @@
 namespace UsefulTeam\Tests\JwtAuth;
 
 use GuzzleHttp\Cookie\CookieJar;
+use GuzzleHttp\Exception\GuzzleException;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -12,6 +13,9 @@ final class RefreshTokenTest extends TestCase {
 
   use RestTestTrait;
 
+  /**
+   * @throws GuzzleException
+   */
   public function testToken(): string {
     $response = $this->client->post('/wp-json/jwt-auth/v1/token', [
       'form_params' => [
@@ -43,6 +47,7 @@ final class RefreshTokenTest extends TestCase {
 
   /**
    * @depends testToken
+   * @throws GuzzleException
    */
   public function testTokenValidateWithRefreshToken(string $refreshToken): void {
     $this->assertNotEmpty($refreshToken);
@@ -60,6 +65,7 @@ final class RefreshTokenTest extends TestCase {
 
   /**
    * @depends testToken
+   * @throws GuzzleException
    */
   public function testTokenWithRefreshToken(string $refreshToken): void {
     $this->assertNotEmpty($refreshToken);
@@ -67,7 +73,7 @@ final class RefreshTokenTest extends TestCase {
     $cookies = [
       'refresh_token' => $refreshToken,
     ];
-    $domain = $this->client->getConfig('base_uri')->getHost();
+    $domain = $this->getDomain();
     $cookies = CookieJar::fromArray($cookies, $domain);
 
     $response = $this->client->post('/wp-json/jwt-auth/v1/token', [
@@ -94,6 +100,7 @@ final class RefreshTokenTest extends TestCase {
 
   /**
    * @depends testToken
+   * @throws GuzzleException
    */
   public function testTokenWithInvalidRefreshToken(string $refreshToken): void {
     $this->assertNotEmpty($refreshToken);
@@ -101,7 +108,7 @@ final class RefreshTokenTest extends TestCase {
     $cookies = [
       'refresh_token' => $refreshToken . '123',
     ];
-    $domain = $this->client->getConfig('base_uri')->getHost();
+    $domain = $this->getDomain();
     $cookies = CookieJar::fromArray($cookies, $domain);
 
     $response = $this->client->post('/wp-json/jwt-auth/v1/token', [
@@ -115,6 +122,7 @@ final class RefreshTokenTest extends TestCase {
 
   /**
    * @depends testToken
+   * @throws GuzzleException
    */
   public function testTokenRefresh(string $refreshToken): string {
     $this->assertNotEmpty($refreshToken);
@@ -122,7 +130,7 @@ final class RefreshTokenTest extends TestCase {
     $cookies = [
       'refresh_token' => $refreshToken,
     ];
-    $domain = $this->client->getConfig('base_uri')->getHost();
+    $domain = $this->getDomain();
     $cookies = CookieJar::fromArray($cookies, $domain);
 
     $response = $this->client->post('/wp-json/jwt-auth/v1/token/refresh', [
@@ -146,13 +154,16 @@ final class RefreshTokenTest extends TestCase {
     return $this->refreshToken;
   }
 
+  /**
+   * @throws GuzzleException
+   */
   public function testTokenWithRotatedRefreshToken(): void {
     // Not using @depends, because refresh token rotation relies on particular
     // order.
     $refreshToken1 = $this->testToken();
     $this->assertNotEmpty($refreshToken1);
 
-    $domain = $this->client->getConfig('base_uri')->getHost();
+    $domain = $this->getDomain();
 
     // Fetch a new refresh token.
     $this->cookies->clear();
@@ -207,8 +218,11 @@ final class RefreshTokenTest extends TestCase {
     $this->assertEquals(false, $body['success']);
   }
 
+  /**
+   * @throws GuzzleException
+   */
   public function testTokenRefreshRotationByDevice() {
-    $domain = $this->client->getConfig('base_uri')->getHost();
+    $domain = $this->getDomain();
 
     $devices = [
       1 => [
@@ -300,6 +314,7 @@ final class RefreshTokenTest extends TestCase {
 
   /**
    * @depends testToken
+   * @throws GuzzleException
    */
   public function testTokenRefreshWithInvalidRefreshToken(string $refreshToken): void {
     $this->assertNotEmpty($refreshToken);
@@ -317,7 +332,7 @@ final class RefreshTokenTest extends TestCase {
     $cookies = [
       'refresh_token' => $refreshToken,
     ];
-    $domain = $this->client->getConfig('base_uri')->getHost();
+    $domain = $this->getDomain();
     $cookies = CookieJar::fromArray($cookies, $domain);
 
     $response = $this->client->post('/wp-json/jwt-auth/v1/token/refresh', [
