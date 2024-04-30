@@ -116,7 +116,7 @@ class Auth {
 
 				$split = preg_split( "/[\s,]+/", $filters );
 
-				return array_merge( $headers, $split );
+				return array_unique( array_merge( $headers, $split ) );
 			} );
 		} else if ( ! headers_sent() ) {
 			$headers = apply_filters( 'jwt_auth_cors_allow_headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization, Cookie' );
