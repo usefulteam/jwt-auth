@@ -7,6 +7,43 @@
     "content-hash": "9cbcd0e3f958a25fe379a4c9f9e226e0",
     "packages": [
         {
+            "name": "collizo4sky/persist-admin-notices-dismissal",
+            "version": "1.4.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/w3guy/persist-admin-notices-dismissal.git",
+                "reference": "163b868c98cf97ea15b4d7e1305e2d52c9242e7e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/w3guy/persist-admin-notices-dismissal/zipball/163b868c98cf97ea15b4d7e1305e2d52c9242e7e",
+                "reference": "163b868c98cf97ea15b4d7e1305e2d52c9242e7e",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.4"
+            },
+            "type": "library",
+            "autoload": {
+                "classmap": [
+                    "persist-admin-notices-dismissal.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-3.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Collins Agbonghama",
+                    "email": "me@w3guy.com",
+                    "role": "developer"
+                }
+            ],
+            "description": "Simple library to persist dismissal of admin notices across pages in WordPress dashboard.",
+            "time": "2024-03-10T15:11:42+00:00"
+        },
+        {
             "name": "firebase/php-jwt",
             "version": "v6.3.2",
             "source": {
