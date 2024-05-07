@@ -2,7 +2,7 @@ name: Plugin asset/readme update
 on:
   push:
     branches:
-    - wp-org-master
+    - master
     paths:
       - 'readme.txt'
       - '.wordpress-org/**'
