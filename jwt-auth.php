@@ -3,7 +3,7 @@
  * Plugin Name: JWT Auth
  * Plugin URI:  https://github.com/usefulteam/jwt-auth
  * Description: WordPress JWT Authentication.
- * Version:     3.0.1
+ * Version:     3.0.2
  * Author:      Useful Team
  * Author URI:  https://usefulteam.com
  * License:     GPL-3.0
