@@ -18,6 +18,26 @@ WordPress JSON Web Token Authentication allows you to do REST API authentication
 - Reporting plugin's bug: [GitHub issues tracker](https://github.com/usefulteam/jwt-auth/issues)
 - [Discord channel](https://discord.gg/DgECpEg) also available for faster response.
 
+## Upgrading to v3
+
+When updating from v2 to v3, familiarise yourself with its changes to ensure that your site continues to work as expected:
+
+= New: Refresh tokens ([docs](https://github.com/usefulteam/jwt-auth#refreshing-the-access-token)) =
+
+Key changes:
+
+- Default JWT access token expiry time has been reduced from 7 days to 10 minutes.
+- On expiry of a JWT, clients need to retrieve a new access token using the [refresh token as described here](https://github.com/usefulteam/jwt-auth#refreshing-the-access-token).
+- To retain the 7 day expiry time, use the hook `jwt_auth_expire`.
+
+= Removed Whitelist =
+
+Key changes:
+
+- You no longer need to whitelist REST paths from other plugins with the hook `jwt_auth_whitelist`. You can remove the hook.
+- Instead, custom REST API routes should have access requirements specified with the [permissions callback](https://developer.wordpress.org/rest-api/extending-the-rest-api/adding-custom-endpoints/#permissions-callback) when it is registered.
+- This means that if a route requires authentication, any authentication method can be used and this should reduce conflicts between this and other plugins. See [this discussion](https://github.com/usefulteam/jwt-auth/pull/60) for further information.
+
 ## Enable PHP HTTP Authorization Header
 
 = Shared Hosts =
@@ -783,6 +803,14 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 3. Other error responses
 
 == Changelog ==
+= 3.0.2 =
+- Fix: Do not revalidate authentication headers if a valid user was determined already. (#75)
+- Fix: Added debugging timeframe before purging refresh tokens. (#93)
+- Fix: Fixed unnecessary user account lookup for device listing on user profile page. (#84)
+- Fix: Added more granular refresh token validation error messages. (#78)
+- Fix: Added integration for new CORS filter hook rest_allowed_cors_headers in WordPress 5.5.0. (#97)
+- Fix: Updated Guzzle to v7.8.1 (used in tests only). (#112)
+
 = 3.0.1 =
 - Updated firebase/php-jwt to 6.3 to address security issue in versions prior to 6.x.
 
@@ -792,6 +820,24 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 - Breaking change: Reduced default access token lifetime to 10 minutes.
 - Breaking bugfix: All authentication error responses are using the correct HTTP status code 401 (Unauthorized) instead of 403 (Forbidden) now.
 - Breaking change: Removed whitelist. To retain similar functionality, install a separate plugin, such as https://wordpress.org/plugins/disable-rest-api-and-require-jwt-oauth-authentication/
+
+= 2.1.6 =
+- Added automated asset updates from GitHub.
+
+= 2.1.5 =
+- Removed dev and build files from distribution.
+
+= 2.1.4 =
+- Added update warning and information relevant to updating to version 3.
+
+= 2.1.3 =
+- Fix some missing composer files in 2.1.2.
+
+= 2.1.2 =
+- Updated to fix a number of issues highlighted by wpcs.
+
+= 2.1.1 =
+- Updated firebase/php-jwt to 6.3 to address security issue in versions prior to 6.x.
 
 = 2.1.0 =
 - It's possible now to whitelist an endpoint with specific method (GET/POST). See [PR #47](https://github.com/usefulteam/jwt-auth/pull/47)

@@ -200,7 +200,7 @@ class Auth {
 					'success'    => false,
 					'statusCode' => 401,
 					'code'       => $error_code,
-					'message'    => strip_tags( $user->get_error_message( $error_code ) ),
+					'message'    => wp_strip_all_tags( $user->get_error_message( $error_code ) ),
 					'data'       => array(),
 				),
 				401
@@ -366,11 +366,11 @@ class Auth {
 		 * return the user.
 		 */
 		$headerkey = apply_filters( 'jwt_auth_authorization_header', 'HTTP_AUTHORIZATION' );
-		$auth      = isset( $_SERVER[ $headerkey ] ) ? $_SERVER[ $headerkey ] : false;
+		$auth      = isset( $_SERVER[ $headerkey ] ) ? sanitize_text_field( wp_unslash( $_SERVER[ $headerkey ] ) ) : false;
 
 		// Double check for different auth header string (server dependent).
 		if ( ! $auth ) {
-			$auth = isset( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) ? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] : false;
+			$auth = isset( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) ) : false;
 		}
 
 		if ( ! $auth ) {
@@ -638,7 +638,7 @@ class Auth {
 		 */
 		$this->rest_api_slug = get_option( 'permalink_structure' ) ? rest_get_url_prefix() : '?rest_route=/';
 
-		$valid_api_uri = strpos( $_SERVER['REQUEST_URI'], $this->rest_api_slug );
+		$valid_api_uri = strpos( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), $this->rest_api_slug );
 
 		// Skip validation if not a REST API request or a user was determined already.
 		if ( ! $valid_api_uri || $user_id ) {
@@ -649,7 +649,7 @@ class Auth {
 		 * If the request URI is for validate the token don't do anything,
 		 * This avoid double calls to the validate_token function.
 		 */
-		$validate_uri = strpos( $_SERVER['REQUEST_URI'], 'token/validate' );
+		$validate_uri = strpos( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), 'token/validate' );
 
 		if ( $validate_uri > 0 ) {
 			return $user_id;
