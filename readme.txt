@@ -767,6 +767,14 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 3. Other error responses
 
 == Changelog ==
+= 3.0.2 =
+- Fix: Do not revalidate authentication headers if a valid user was determined already. (#75)
+- Fix: Added debugging timeframe before purging refresh tokens. (#93)
+- Fix: Fixed unnecessary user account lookup for device listing on user profile page. (#84)
+- Fix: Added more granular refresh token validation error messages. (#78)
+- Fix: Added integration for new CORS filter hook rest_allowed_cors_headers in WordPress 5.5.0. (#97)
+- Fix: Updated Guzzle to v7.8.1 (used in tests only). (#112)
+
 = 3.0.1 =
 - Updated firebase/php-jwt to 6.3 to address security issue in versions prior to 6.x.
 
