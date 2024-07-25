@@ -29,8 +29,8 @@ class Devices {
 	 */
 	public function __construct( LoggerInterface $logger ) {
 
-		add_action( 'show_user_profile', array( $this, 'custom_user_profile_fields' ), 10, 1 );
-		add_action( 'edit_user_profile', array( $this, 'custom_user_profile_fields' ), 10, 1 );
+		add_action( 'show_user_profile', array( $this, 'custom_user_profile_fields' ) );
+		add_action( 'edit_user_profile', array( $this, 'custom_user_profile_fields' ) );
 
 		add_action( 'wp_ajax_remove_device', array( $this, 'remove_device' ) );
 		add_shortcode( 'jwt_auth_devices', array( $this, 'shortcode_jwt_auth_devices' ) );
@@ -303,7 +303,7 @@ class Devices {
 	 */
 	public function remove_device() {
 
-		$nonce   = isset( $_POST['nonce'] ) ? $_POST['nonce'] : '';
+		$nonce   = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] )) : '';
 		$device  = isset( $_POST['device'] ) ? sanitize_text_field( $_POST['device'] ) : ''; // phpcs:ignore
 		$user_id = isset( $_POST['user_id'] ) && is_numeric( $_POST['user_id'] ) ? absint( $_POST['user_id'] ) : 0; // phpcs:ignore
 
@@ -329,24 +329,13 @@ class Devices {
 	 *
 	 * @param WP_User $profileuser The current WP_User object.
 	 */
-	public function custom_user_profile_fields( $profileuser ) {
-
-		// If is current user's profile (profile.php).
-		if ( defined( 'IS_PROFILE_PAGE' ) && IS_PROFILE_PAGE ) {
-			$user_id = get_current_user_id();
-		} elseif ( ! empty( $_GET['user_id'] ) && is_numeric( $_GET['user_id'] ) ) { // phpcs:ignore
-			// If is another user's profile page.
-			$user_id = absint( $_GET['user_id'] ); // phpcs:ignore
-		} else {
-			// Otherwise something is wrong.
-			die( 'No user id defined.' );
-		}
+	public function custom_user_profile_fields( $profile_user ) {
 
 		?>
-      <h2><?php echo __( 'Connected Devices', 'jwt-auth' ); ?></h2>
-      <div id="jwt_auth_devices" style="width:33%">
-				<?php echo do_shortcode( '[jwt_auth_devices user_id=' . $user_id . ']' ); ?>
-      </div>
+		<h2><?php echo wp_kses( __( 'Connected Devices', 'jwt-auth' ) , 'post' ); ?></h2>
+		<div id="jwt_auth_devices" style="width:33%">
+			<?php echo do_shortcode( '[jwt_auth_devices user_id=' . $profile_user->ID . ']' ); ?>
+		</div>
 		<?php
 
 	}
@@ -443,7 +432,7 @@ class Devices {
                       'action': 'remove_device',
                       'user_id': user_id,
                       'device': device_name,
-                      'nonce': '<?php echo wp_create_nonce( 'jwt_auth_remove_device_' . $user_id ); ?>',
+                      'nonce': '<?php echo wp_kses( wp_create_nonce( 'jwt_auth_remove_device_' . $user_id ) , 'post' ); ?>',
                   };
 
                   jQuery.post(ajaxurl, data, function (response) {
@@ -462,7 +451,7 @@ class Devices {
 
                       } else {
 
-                          alert("<?php echo __( "Ops... device couldn't be removed!", 'jwt-auth' ); ?>");
+                          alert("<?php echo wp_kses( __( "Ops... device couldn't be removed!", 'jwt-auth' ) , 'post' ); ?>");
                       }
 
                   });
@@ -502,7 +491,7 @@ class Devices {
 									echo '
 							<input id="jwt_auth_remove_button-' . esc_attr( $i ) .
 									     '" class="button wp-generate-pw' .
-									     '" type="button" value="' . __( 'Remove', 'jwt-auth' ) .
+									     '" type="button" value="' . esc_attr( __( 'Remove', 'jwt-auth' )) .
 									     '" onclick="jwt_auth_remove_device(\'' . esc_attr( $user_id ) . '\',\'' . esc_attr( $device ) . '\',\'' . esc_attr( $i ) . '\' )" />
 						';
 									?>

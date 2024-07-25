@@ -18,6 +18,7 @@ class Setup {
 	private static $instance;
 	public $auth;
 	public $devices;
+	public $updates;
 
 	/**
 	 * @var LoggerInterface
@@ -49,7 +50,7 @@ class Setup {
 		if ( ! $logger instanceof LoggerInterface ) {
 			$logger = new NullLogger();
 		}
-		$this->logger  = $logger;
+		$this->logger = $logger;
 
 		$this->auth    = new Auth( $this->logger );
 		$this->devices = new Devices( $this->logger );
@@ -58,6 +59,13 @@ class Setup {
 		add_filter( 'rest_api_init', array( $this->auth, 'add_cors_support' ) );
 		add_filter( 'rest_pre_dispatch', array( $this->auth, 'rest_pre_dispatch' ), 10, 3 );
 		add_filter( 'determine_current_user', array( $this->auth, 'determine_current_user' ) );
+
+		// add plugin updates class and filters only in wp-admin
+		if ( is_admin() ) {
+			require __DIR__ . '/class-update.php';
+			$this->updates = new Update();
+		}
+
 
 		if ( ! wp_next_scheduled( 'jwt_auth_purge_expired_refresh_tokens' ) ) {
 			wp_schedule_event( time(), 'weekly', 'jwt_auth_purge_expired_refresh_tokens' );
@@ -78,7 +86,7 @@ class Setup {
 	public function cron_purge_expired_refresh_tokens() {
 		global $wpdb;
 
-		$this->logger->notice("Cron purge expired refresh tokens.");
+		$this->logger->notice( "Cron purge expired refresh tokens." );
 
 		// Retain expired refresh tokens for one month for potential debugging.
 		$purge_timestamp = time() - 30 * DAY_IN_SECONDS;

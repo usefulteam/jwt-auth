@@ -110,9 +110,25 @@ class Auth {
 	 * Add CORs suppot to the request.
 	 */
 	public function add_cors_support() {
+		global $wp_version;
+
 		$enable_cors = defined( 'JWT_AUTH_CORS_ENABLE' ) ? JWT_AUTH_CORS_ENABLE : false;
 
-		if ( $enable_cors && ! headers_sent() ) {
+		if ( ! $enable_cors ) {
+			return;
+		}
+
+		// Hook exists since 5.5.0
+		if ( version_compare( $wp_version, '5.5.0', '>=' ) ) {
+			add_filter( 'rest_allowed_cors_headers', function ( array $headers ) {
+
+				$filters = apply_filters( 'jwt_auth_cors_allow_headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization, Cookie' );
+
+				$split = preg_split( "/[\s,]+/", $filters );
+
+				return array_unique( array_merge( $headers, $split ) );
+			} );
+		} else if ( ! headers_sent() ) {
 			$headers = apply_filters( 'jwt_auth_cors_allow_headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization, Cookie' );
 
 			header( sprintf( 'Access-Control-Allow-Headers: %s', $headers ) );
@@ -198,7 +214,7 @@ class Auth {
 					'success'    => false,
 					'statusCode' => 401,
 					'code'       => $error_code,
-					'message'    => strip_tags( $user->get_error_message( $error_code ) ),
+					'message'    => wp_strip_all_tags( $user->get_error_message( $error_code ) ),
 					'data'       => array(),
 				),
 				401
@@ -434,11 +450,11 @@ class Auth {
 		 * return the user.
 		 */
 		$headerkey = apply_filters( 'jwt_auth_authorization_header', 'HTTP_AUTHORIZATION' );
-		$auth      = empty( $_SERVER[ $headerkey ] ) ? false : $_SERVER[ $headerkey ];
+		$auth      = empty( $_SERVER[ $headerkey ] ) ? false : sanitize_text_field( wp_unslash( $_SERVER[ $headerkey ] ) );
 
 		// Double check for different auth header string (server dependent).
 		if ( ! $auth ) {
-			$auth = empty( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) ? false : $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+			$auth = empty( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) ? false : sanitize_text_field( wp_unslash( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) );
 		}
 
 		if ( ! $auth ) {
@@ -748,15 +764,33 @@ class Auth {
 			$device                    = empty( $payload->data->device ) ? '' : $payload->data->device;
 			$last_refresh_token_issued = $user_refresh_tokens[ $device ] ?? null;
 
-			if ( empty( $last_refresh_token_issued ) ||
-			     $last_refresh_token_issued['token'] !== $refresh_token ||
-			     $last_refresh_token_issued['expires'] < time() ) {
+			if ( empty( $last_refresh_token_issued ) ) {
 				return new WP_REST_Response(
 					array(
 						'success'    => false,
 						'statusCode' => 401,
-						'code'       => 'jwt_auth_obsolete_token',
-						'message'    => __( 'Token is obsolete', 'jwt-auth' ),
+						'code'       => 'jwt_auth_invalid_refresh_token',
+						'message'    => __( 'Invalid refresh token', 'jwt-auth' ),
+					),
+					401
+				);
+			} elseif ( $refresh_token !== $last_refresh_token_issued['token'] ) {
+				return new WP_REST_Response(
+					array(
+						'success'    => false,
+						'statusCode' => 401,
+						'code'       => 'jwt_auth_obsolete_refresh_token',
+						'message'    => __( 'Refresh token is obsolete', 'jwt-auth' ),
+					),
+					401
+				);
+			} elseif ( time() > $last_refresh_token_issued['expires'] ) {
+				return new WP_REST_Response(
+					array(
+						'success'    => false,
+						'statusCode' => 401,
+						'code'       => 'jwt_auth_expired_refresh_token',
+						'message'    => __( 'Refresh token has expired', 'jwt-auth' ),
 					),
 					401
 				);
@@ -828,7 +862,7 @@ class Auth {
 		 */
 		$this->rest_api_slug = get_option( 'permalink_structure' ) ? rest_get_url_prefix() : '?rest_route=/';
 
-		$valid_api_uri = strpos( $_SERVER['REQUEST_URI'], $this->rest_api_slug );
+		$valid_api_uri = strpos( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), $this->rest_api_slug );
 
 		// Skip validation if not a REST API request or a user was determined already.
 		if ( ! $valid_api_uri || $user_id ) {
@@ -839,7 +873,7 @@ class Auth {
 		 * If the request URI is for validate the token don't do anything,
 		 * This avoid double calls to the validate_token function.
 		 */
-		$validate_uri = strpos( $_SERVER['REQUEST_URI'], 'token/validate' );
+		$validate_uri = strpos( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), 'token/validate' );
 
 		if ( $validate_uri > 0 ) {
 			return $user_id;

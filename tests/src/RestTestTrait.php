@@ -18,45 +18,19 @@ use GuzzleHttp\Cookie\SetCookie;
  */
 trait RestTestTrait {
 
-	/**
-	 * @var \GuzzleHttp\Client
-	 */
-	protected $client;
+	protected Client $client;
+	protected CookieJar $cookies;
+	protected array $httpClientConfig;
 
-	/**
-	 * @var \GuzzleHttp\Cookie\CookieJar
-	 */
-	protected $cookies;
-
-	/**
-	 * @var string
-	 */
-	protected $username;
-
-	/**
-	 * @var string
-	 */
-	protected $password;
-
-	/**
-	 * @var string
-	 */
-	protected $flow;
-
-	/**
-	 * @var string
-	 */
-	protected $token;
-
-	/**
-	 * @var string
-	 */
-	protected $refreshToken;
+	protected ?string $username;
+	protected ?string $password;
+	protected ?string $token;
+	protected ?string $refreshToken;
 
 	protected function setUp(): void {
-		$this->cookies = new CookieJar();
-		$options       = [
-			'base_uri'         => $_ENV['URL'],
+		$this->cookies          = new CookieJar();
+		$this->httpClientConfig = [
+			'base_uri'         => $_ENV['URL'] ?? 'http://localhost',
 			'http_errors'      => false,
 			'cookies'          => $this->cookies,
 			// PHP's cURL library attempts to resolve domains with IPv6, causing a
@@ -75,11 +49,11 @@ trait RestTestTrait {
 			],
 		];
 		if ( in_array( '--debug', $_SERVER['argv'], true ) ) {
-			$options['debug'] = true;
+			$this->httpClientConfig['debug'] = true;
 		}
-		$this->client   = new Client( $options );
-		$this->username = $_ENV['USERNAME'];
-		$this->password = $_ENV['PASSWORD'];
+		$this->client   = new Client( $this->httpClientConfig );
+		$this->username = $_ENV['USERNAME'] ?? null;
+		$this->password = $_ENV['PASSWORD'] ?? null;
 		$this->flow     = $_ENV['FLOW'];
 	}
 
@@ -92,6 +66,10 @@ trait RestTestTrait {
 		] ) );
 
 		return $this->cookies;
+	}
+
+	protected function getDomain(): string {
+		return parse_url( $this->httpClientConfig['base_uri'], PHP_URL_HOST );
 	}
 
 }

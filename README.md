@@ -207,6 +207,7 @@ If the refresh token is valid, then you receive a new refresh token as a cookie 
 
 By default, each refresh token expires after 30 days.
 
+
 ### Refresh Token Rotation
 
 Whenever you are authenticating afresh or refreshing the refresh token, only the last issued refresh token remains valid. All previously issued refresh tokens can no longer be used.
@@ -360,7 +361,31 @@ If the token is invalid an error will be returned. Here are some samples of erro
 }
 ```
 
-+## Available Filter Hooks
+**Obsolete Refresh Token**
+
+```json
+{
+	"success": false,
+	"statusCode": 401,
+	"code": "jwt_auth_obsolete_refresh_token",
+	"message": "Refresh token is obsolete",
+	"data": []
+}
+```
+
+**Expired Refresh Token**
+
+```json
+{
+	"success": false,
+	"statusCode": 401,
+	"code": "jwt_auth_expired_refresh_token",
+	"message": "Refresh token has expired",
+	"data": []
+}
+```
+
+## Available Filter Hooks
 
 **JWT Auth** is developer friendly and has some filters available to override the default settings.
 
@@ -655,7 +680,7 @@ add_filter(
 
 ### jwt_auth_refresh_expire
 
-The `jwt_auth_refresh_expire` allows you to change the [**exp**](https://tools.ietf.org/html/rfc7519#section-4.1.4) value before the payload is encoded to be a refresh token
+The `jwt_auth_refresh_expire` filter hook allows you to change the [**exp**](https://tools.ietf.org/html/rfc7519#section-4.1.4) value before the payload is encoded to be a refresh token
 
 Default Value:
 

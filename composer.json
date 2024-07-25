@@ -16,13 +16,15 @@
     "minimum-stability": "stable",
     "require": {
         "firebase/php-jwt": "^6.3",
-        "psr/log": "^3.0"
+        "psr/log": "^3.0",
+        "collizo4sky/persist-admin-notices-dismissal": "^1.4"
     },
     "require-dev": {
         "php": ">=7.4",
-        "ext-curl": "*",
         "phpunit/phpunit": "^9.5",
-        "guzzlehttp/guzzle": "^7.4"
+        "guzzlehttp/guzzle": "^7.8.1",
+        "ext-json": "*",
+        "ext-curl": "*"
     },
     "scripts": {
         "test": "./vendor/bin/phpunit"
