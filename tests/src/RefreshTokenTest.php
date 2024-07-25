@@ -106,7 +106,7 @@ final class RefreshTokenTest extends TestCase {
 	public function testTokenWithRefreshToken( string $refreshToken ): void {
 		$this->assertNotEmpty( $refreshToken );
 
-		$request_data = array();
+		$request_options = array();
 
 		if ( $this->flow === 'cookie' ) {
 			$cookies = [
@@ -115,15 +115,19 @@ final class RefreshTokenTest extends TestCase {
 			$domain  = $this->getDomain();
 			$cookies = CookieJar::fromArray( $cookies, $domain );
 
-			$request_data['cookies'] = $cookies;
+			$request_options['cookies'] = $cookies;
 
+		} elseif ($this->flow === 'body') {
+			$request_options[\GuzzleHttp\RequestOptions::JSON] = [
+				'refresh_token' => $refreshToken,
+			];
 		} else {
-			$request_data['form_params'] = [
+			$request_options['form_params'] = [
 				'refresh_token' => $refreshToken,
 			];
 		}
 
-		$response = $this->client->post( '/wp-json/jwt-auth/v1/token', $request_data );
+		$response = $this->client->post( '/wp-json/jwt-auth/v1/token', $request_options );
 
 		$body = json_decode( $response->getBody()->getContents(), true );
 		$this->assertEquals( 'jwt_auth_valid_credential', $body['code'] );
@@ -159,7 +163,7 @@ final class RefreshTokenTest extends TestCase {
 	public function testTokenWithInvalidRefreshToken( string $refreshToken ): void {
 		$this->assertNotEmpty( $refreshToken );
 
-		$request_data = array();
+		$request_options = array();
 
 		if ( $this->flow === 'cookie' ) {
 
@@ -169,18 +173,20 @@ final class RefreshTokenTest extends TestCase {
 			$domain  = $this->getDomain();
 			$cookies = CookieJar::fromArray( $cookies, $domain );
 
-			$request_data['cookies'] = $cookies;
-		} else {
-
-			$request_data['form_params'] = [
+			$request_options['cookies'] = $cookies;
+		} elseif ($this->flow === 'body') {
+			$request_options[\GuzzleHttp\RequestOptions::JSON] = [
 				'refresh_token' => $refreshToken . '123',
 			];
-
+		} else {
+			$request_options['form_params'] = [
+				'refresh_token' => $refreshToken . '123',
+			];
 		}
 
-		$response = $this->client->post( '/wp-json/jwt-auth/v1/token', $request_data );
+		$response = $this->client->post( '/wp-json/jwt-auth/v1/token', $request_options );
 		$body     = json_decode( $response->getBody()->getContents(), true );
-		$this->assertEquals( 'jwt_auth_obsolete_refresh_token', $body['code'] );
+		$this->assertEquals( 'jwt_auth_invalid_refresh_token', $body['code'] );
 		$this->assertEquals( 401, $response->getStatusCode() );
 		$this->assertEquals( false, $body['success'] );
 	}
@@ -195,7 +201,7 @@ final class RefreshTokenTest extends TestCase {
 		// Wait 1 seconds as the token creation is based on timestamp in seconds.
 		sleep( 1 );
 
-		$request_data = array();
+		$request_options = array();
 
 		if ( $this->flow === 'cookie' ) {
 			$cookies = [
@@ -204,14 +210,18 @@ final class RefreshTokenTest extends TestCase {
 			$domain  = $this->getDomain();
 			$cookies = CookieJar::fromArray( $cookies, $domain );
 
-			$request_data['cookies'] = $cookies;
+			$request_options['cookies'] = $cookies;
+		} elseif ($this->flow === 'body') {
+			$request_options[\GuzzleHttp\RequestOptions::JSON] = [
+				'refresh_token' => $refreshToken,
+			];
 		} else {
-			$request_data['form_params'] = [
+			$request_options['form_params'] = [
 				'refresh_token' => $refreshToken,
 			];
 		}
 
-		$response = $this->client->post( '/wp-json/jwt-auth/v1/token/refresh', $request_data );
+		$response = $this->client->post( '/wp-json/jwt-auth/v1/token/refresh', $request_options );
 		$body     = json_decode( $response->getBody()->getContents(), true );
 		$this->assertEquals( 'jwt_auth_valid_token', $body['code'] );
 		$this->assertEquals( 200, $response->getStatusCode() );
@@ -250,7 +260,7 @@ final class RefreshTokenTest extends TestCase {
 		// Wait 1 seconds as the token creation is based on timestamp in seconds.
 		sleep( 1 );
 
-		$request_data = array();
+		$request_options = array();
 
 		if ( $this->flow === 'cookie' ) {
 			$domain = $this->getDomain();
@@ -258,13 +268,17 @@ final class RefreshTokenTest extends TestCase {
 			// Fetch a new refresh token.
 			$this->cookies->clear();
 			$this->setCookie( 'refresh_token', $refreshToken1, $domain );
+		} elseif ($this->flow === 'body') {
+			$request_options[\GuzzleHttp\RequestOptions::JSON] = [
+				'refresh_token' => $refreshToken1,
+			];
 		} else {
-			$request_data['form_params'] = [
+			$request_options['form_params'] = [
 				'refresh_token' => $refreshToken1,
 			];
 		}
 
-		$response = $this->client->post( '/wp-json/jwt-auth/v1/token/refresh', $request_data );
+		$response = $this->client->post( '/wp-json/jwt-auth/v1/token/refresh', $request_options );
 		$body     = json_decode( $response->getBody()->getContents(), true );
 		$this->assertEquals( 'jwt_auth_valid_token', $body['code'] );
 		$this->assertEquals( 200, $response->getStatusCode() );
@@ -291,16 +305,22 @@ final class RefreshTokenTest extends TestCase {
 		$this->assertNotEquals( $refreshToken2, $refreshToken1 );
 
 		if ( $this->flow === 'cookie' ) {
+			$domain = $this->getDomain();
+
 			// Confirm the rotated refresh token is valid.
 			$this->cookies->clear();
 			$this->setCookie( 'refresh_token', $refreshToken2, $domain );
+		} elseif ($this->flow === 'body') {
+			$request_options[\GuzzleHttp\RequestOptions::JSON] = [
+				'refresh_token' => $refreshToken2,
+			];
 		} else {
-			$request_data['form_params'] = [
+			$request_options['form_params'] = [
 				'refresh_token' => $refreshToken2,
 			];
 		}
 
-		$response = $this->client->post( '/wp-json/jwt-auth/v1/token', $request_data );
+		$response = $this->client->post( '/wp-json/jwt-auth/v1/token', $request_options );
 		$body     = json_decode( $response->getBody()->getContents(), true );
 		$this->assertEquals( 'jwt_auth_valid_credential', $body['code'] );
 		$this->assertEquals( 200, $response->getStatusCode() );
@@ -313,6 +333,8 @@ final class RefreshTokenTest extends TestCase {
 		$this->assertNotEquals( $this->token, $refreshToken2 );
 
 		if ( $this->flow === 'cookie' ) {
+			$domain = $this->getDomain();
+
 			// Discard the refresh_token cookie we set above to only retain the
 			// refresh_token cookie from the response.
 			$this->cookies->clearSessionCookies();
@@ -323,12 +345,16 @@ final class RefreshTokenTest extends TestCase {
 			// Confirm the previous refresh token is no longer valid.
 			$this->cookies->clear();
 			$this->setCookie( 'refresh_token', $refreshToken1, $domain );
+		} elseif ($this->flow === 'body') {
+			$request_options[\GuzzleHttp\RequestOptions::JSON] = [
+				'refresh_token' => $refreshToken1,
+			];
 		} else {
-			$request_data['form_params'] = [
+			$request_options['form_params'] = [
 				'refresh_token' => $refreshToken1,
 			];
 		}
-		$response = $this->client->post( '/wp-json/jwt-auth/v1/token', $request_data );
+		$response = $this->client->post( '/wp-json/jwt-auth/v1/token', $request_options );
 		$body     = json_decode( $response->getBody()->getContents(), true );
 		$this->assertEquals( 'jwt_auth_obsolete_refresh_token', $body['code'], $body['message'] );
 		$this->assertEquals( 401, $response->getStatusCode() );
@@ -388,19 +414,23 @@ final class RefreshTokenTest extends TestCase {
 		for ( $i = 1; $i <= count( $devices ); $i ++ ) {
 			$initial_refresh_token = $devices[ $i ]['refresh_token'];
 
-			$request_data = array();
+			$request_options = array();
 			if ( $this->flow === 'cookie' ) {
-				$request_data['form_params'] = [
+				$request_options['form_params'] = [
 					'device' => $devices[ $i ]['device'],
 				];
-				$this->setCookie( 'refresh_token', $devices[ $i ]['refresh_token'], $domain );
+				$this->setCookie( 'refresh_token', $initial_refresh_token, $domain );
+			} elseif ($this->flow === 'body') {
+				$request_options[\GuzzleHttp\RequestOptions::JSON] = [
+					'refresh_token' => $initial_refresh_token,
+				];
 			} else {
-				$request_data['form_params'] = [
-					'refresh_token' => $devices[ $i ]['refresh_token'],
+				$request_options['form_params'] = [
+					'refresh_token' => $initial_refresh_token,
 				];
 			}
 
-			$response = $this->client->post( '/wp-json/jwt-auth/v1/token/refresh', $request_data );
+			$response = $this->client->post( '/wp-json/jwt-auth/v1/token/refresh', $request_options );
 			$body     = json_decode( $response->getBody()->getContents(), true );
 			$this->assertEquals( 'jwt_auth_valid_token', $body['code'] );
 
@@ -428,15 +458,19 @@ final class RefreshTokenTest extends TestCase {
 		// Confirm each device can use its refresh token to authenticate.
 		for ( $i = 1; $i <= count( $devices ); $i ++ ) {
 
-			$request_data = array();
+			$request_options = array();
 			if ( $this->flow === 'cookie' ) {
 				$this->setCookie( 'refresh_token', $devices[ $i ]['refresh_token'], $domain );
+			} elseif ($this->flow === 'body') {
+				$request_options[\GuzzleHttp\RequestOptions::JSON] = [
+					'refresh_token' => $devices[ $i ]['refresh_token'],
+				];
 			} else {
-				$request_data['form_params'] = [
+				$request_options['form_params'] = [
 					'refresh_token' => $devices[ $i ]['refresh_token'],
 				];
 			}
-			$response = $this->client->post( '/wp-json/jwt-auth/v1/token', $request_data );
+			$response = $this->client->post( '/wp-json/jwt-auth/v1/token', $request_options );
 			$body     = json_decode( $response->getBody()->getContents(), true );
 			$this->assertEquals( 'jwt_auth_valid_credential', $body['code'] );
 			$this->assertArrayHasKey( 'data', $body );
@@ -449,17 +483,21 @@ final class RefreshTokenTest extends TestCase {
 			}
 		}
 
-		$request_data = array();
+		$request_options = array();
 		// Confirm the previous refresh token is no longer valid.
 		if ( $this->flow === 'cookie' ) {
 			$this->setCookie( 'refresh_token', $initial_refresh_token, $domain );
+		} elseif ($this->flow === 'body') {
+			$request_options[\GuzzleHttp\RequestOptions::JSON] = [
+				'refresh_token' => $initial_refresh_token,
+			];
 		} else {
-			$request_data['form_params'] = [
+			$request_options['form_params'] = [
 				'refresh_token' => $initial_refresh_token,
 			];
 		}
 
-		$response = $this->client->post( '/wp-json/jwt-auth/v1/token', $request_data );
+		$response = $this->client->post( '/wp-json/jwt-auth/v1/token', $request_options );
 		$this->assertEquals( 401, $response->getStatusCode() );
 		$body = json_decode( $response->getBody()->getContents(), true );
 		$this->assertEquals( 'jwt_auth_obsolete_refresh_token', $body['code'] );
@@ -487,21 +525,25 @@ final class RefreshTokenTest extends TestCase {
 		$this->assertEquals( 401, $response->getStatusCode() );
 		$this->assertEquals( false, $body['success'] );
 
-		$request_data = array();
+		$request_options = array();
 		if ( $this->flow === 'cookie' ) {
 			$cookies                 = [
 				'refresh_token' => $refreshToken,
 			];
 			$domain                  = $this->getDomain();
 			$cookies                 = CookieJar::fromArray( $cookies, $domain );
-			$request_data['cookies'] = $cookies;
+			$request_options['cookies'] = $cookies;
+		} elseif ($this->flow === 'body') {
+			$request_options[\GuzzleHttp\RequestOptions::JSON] = [
+				'refresh_token' => $refreshToken,
+			];
 		} else {
-			$request_data['form_params'] = [
+			$request_options['form_params'] = [
 				'refresh_token' => $refreshToken,
 			];
 		}
 
-		$response = $this->client->post( '/wp-json/jwt-auth/v1/token/refresh', $request_data );
+		$response = $this->client->post( '/wp-json/jwt-auth/v1/token/refresh', $request_options );
 		$body     = json_decode( $response->getBody()->getContents(), true );
 		$this->assertEquals( 'jwt_auth_obsolete_refresh_token', $body['code'] );
 		$this->assertEquals( 401, $response->getStatusCode() );
