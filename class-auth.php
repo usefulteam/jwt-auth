@@ -314,11 +314,10 @@ class Auth {
 		$refresh_token = $this->generate_refresh_token( $user, $device );
 
 		$alg  = $this->get_alg();
-		$flow = $this->get_flow();
 
 		$payload = JWT::decode( $refresh_token, new Key( $secret_key, $alg ) );
 
-		if ( 'cookie' === $flow ) {
+		if ( $this->is_flow( 'cookie' ) ) {
 			// Send the refresh token as a HttpOnly cookie in the response.
 			setcookie( 'refresh_token', $refresh_token, $payload->exp, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
 		}
@@ -396,6 +395,17 @@ class Auth {
 	 */
 	public function get_flow() {
 		return apply_filters( 'jwt_auth_flow', 'cookie' );
+	}
+
+	/**
+	 * Check if the current flow is one of the given flows.
+	 *
+	 * @param string ...$desired The desired flows.
+	 *
+	 * @return bool
+	 */
+	public function is_flow(...$desired) {
+		return in_array($this->get_flow(), $desired, true);
 	}
 
 	/**
@@ -643,11 +653,9 @@ class Auth {
 		$device        = $payload->data->device;
 		$refresh_token = $this->send_refresh_token( $user, $device );
 
-		$flow = $this->get_flow();
-
 		$additional_fields = array();
 
-		if ( $flow !== 'cookie' ) {
+		if ( ! $this->is_flow( 'cookie' ) ) {
 			$additional_fields = array(
 				'data' => array(
 					'refresh_token' => $refresh_token,
