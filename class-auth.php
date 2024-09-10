@@ -178,7 +178,31 @@ class Auth {
 			);
 		}
 
-		if ( isset( $_COOKIE['refresh_token'] ) ) {
+		if ( isset( $username ) && ! isset( $password )) {
+			$user = new WP_Error(
+				'jwt_auth_no_password',
+				__( 'Password is required', 'jwt-auth' ),
+				array(
+					'status' => 400,
+				)
+			);
+		}
+
+		if ( isset( $password ) && ! isset( $username )) {
+			$user = new WP_Error(
+				'jwt_auth_no_username',
+				__( 'Username is required', 'jwt-auth' ),
+				array(
+					'status' => 400,
+				)
+			);
+		}
+
+		if ( isset( $password ) && isset( $username )) {
+			$user = $this->authenticate_user( $username, $password, $custom_auth );
+		}
+
+		if ( ! $username && ! $password && isset( $_COOKIE['refresh_token'] ) ) {
 			$device  = $request->get_param( 'device' ) ?: '';
 			$user_id = $this->validate_refresh_token( $_COOKIE['refresh_token'], $device );
 
@@ -187,8 +211,6 @@ class Auth {
 				return $user_id;
 			}
 			$user = get_user_by( 'id', $user_id );
-		} else {
-			$user = $this->authenticate_user( $username, $password, $custom_auth );
 		}
 
 		// If the authentication is failed return error response.
