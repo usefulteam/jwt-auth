@@ -803,6 +803,9 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 3. Other error responses
 
 == Changelog ==
+= 3.0.x =
+- Ensure that new logins are prioritised over refresh tokens when both are present.
+
 = 3.0.2 =
 - Fix: Do not revalidate authentication headers if a valid user was determined already. (#75)
 - Fix: Added debugging timeframe before purging refresh tokens. (#93)
