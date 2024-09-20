@@ -178,27 +178,18 @@ class Auth {
 			);
 		}
 
-		if ( isset( $username ) && ! isset( $password )) {
+		if ( ( isset( $username ) && ! isset( $password ) )
+		     ( ! isset( $username ) && isset( $password ) ) ) {
 			$user = new WP_Error(
-				'jwt_auth_no_password',
-				__( 'Password is required', 'jwt-auth' ),
+				'jwt_auth_missing_credentials',
+				__( 'Username and password are required', 'jwt-auth' ),
 				array(
 					'status' => 400,
 				)
 			);
 		}
 
-		if ( isset( $password ) && ! isset( $username )) {
-			$user = new WP_Error(
-				'jwt_auth_no_username',
-				__( 'Username is required', 'jwt-auth' ),
-				array(
-					'status' => 400,
-				)
-			);
-		}
-
-		if ( isset( $password ) && isset( $username )) {
+		if ( isset( $username ) && isset( $password ) ) {
 			$user = $this->authenticate_user( $username, $password, $custom_auth );
 		}
 
