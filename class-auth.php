@@ -192,8 +192,7 @@ class Auth {
 		if ( isset( $username ) && isset( $password ) ) {
 			$user = $this->authenticate_user( $username, $password, $custom_auth );
 		}
-
-		if ( ! $username && ! $password && isset( $_COOKIE['refresh_token'] ) ) {
+		elseif ( isset( $_COOKIE['refresh_token'] ) ) {
 			$device  = $request->get_param( 'device' ) ?: '';
 			$user_id = $this->validate_refresh_token( $_COOKIE['refresh_token'], $device );
 
