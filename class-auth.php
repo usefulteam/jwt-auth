@@ -202,6 +202,16 @@ class Auth {
 				return $user_id;
 			}
 			$user = get_user_by( 'id', $user_id );
+
+			if ( ! $user ) {
+				$user = new WP_Error(
+					'jwt_auth_user_not_found',
+					__( 'User not found', 'jwt-auth' ),
+					array(
+						'status' => 401,
+					)
+				);
+			}
 		}
 
 		// If the authentication is failed return error response.
