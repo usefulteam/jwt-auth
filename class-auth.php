@@ -179,7 +179,8 @@ class Auth {
 		}
 
 		if ( ( isset( $username ) && ! isset( $password ) )
-		     ( ! isset( $username ) && isset( $password ) ) ) {
+			|| ( ! isset( $username ) && isset( $password ) ) 
+			|| ! isset( $_COOKIE['refresh_token'] ) ) {
 			$user = new WP_Error(
 				'jwt_auth_missing_credentials',
 				__( 'Username and password are required', 'jwt-auth' ),
