@@ -296,6 +296,18 @@ If the token is invalid an error will be returned. Here are some samples of erro
 }
 `
 
+= Missing Username and / or Password or Refresh Token =
+
+`
+{
+	"success": false,
+	"statusCode": 400,
+	"code": "jwt_auth_missing_credentials",
+	"message": "Username and password are required",
+	"data": []
+}
+`
+
 = User Not Found =
 
 `
