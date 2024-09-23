@@ -816,7 +816,7 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 
 == Changelog ==
 = 3.0.x =
-- Prioritise authentication with user credentials over refresh token if both are sent.
+- Fix: Prioritise authentication with user credentials over refresh token if both are sent.
 
 = 3.0.2 =
 - Fix: Do not revalidate authentication headers if a valid user was determined already. (#75)
