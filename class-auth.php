@@ -205,8 +205,8 @@ class Auth {
 
 			if ( ! $user ) {
 				$user = new WP_Error(
-					'jwt_auth_user_not_found',
-					__( 'User not found', 'jwt-auth' ),
+					'jwt_auth_invalid_refresh_token',
+					__( 'Invalid refresh token', 'jwt-auth' ),
 					array(
 						'status' => 401,
 					)
@@ -488,8 +488,8 @@ class Auth {
 					array(
 						'success'    => false,
 						'statusCode' => 401,
-						'code'       => 'jwt_auth_user_not_found',
-						'message'    => __( "User doesn't exist", 'jwt-auth' ),
+						'code'       => 'jwt_auth_invalid_token',
+						'message'    => __( "Expired token", 'jwt-auth' ),
 						'data'       => array(),
 					),
 					401
