@@ -489,7 +489,7 @@ class Auth {
 						'success'    => false,
 						'statusCode' => 401,
 						'code'       => 'jwt_auth_invalid_token',
-						'message'    => __( "Expired token", 'jwt-auth' ),
+						'message'    => __( "Invalid token", 'jwt-auth' ),
 						'data'       => array(),
 					),
 					401
