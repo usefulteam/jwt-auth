@@ -8,13 +8,13 @@
 namespace JWTAuth;
 
 use Exception;
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
-use Psr\Log\LoggerInterface;
 use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
+
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 /**
  * The public-facing functionality of the plugin.
@@ -49,26 +49,15 @@ class Auth {
 	private $rest_api_slug = 'wp-json';
 
 	/**
-	 * The logger interface to use
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
-
-	/**
 	 * Setup action & filter hooks.
-	 *
-	 * @param LoggerInterface $logger The logger interface to use.
 	 */
-	public function __construct( LoggerInterface $logger ) {
+	public function __construct() {
 		$this->namespace = 'jwt-auth/v1';
 
 		$this->messages = array(
 			'jwt_auth_no_auth_header'  => __( 'Authorization header not found.', 'jwt-auth' ),
 			'jwt_auth_bad_auth_header' => __( 'Authorization header malformed.', 'jwt-auth' ),
 		);
-
-		$this->logger = $logger;
 	}
 
 	/**
@@ -140,7 +129,7 @@ class Auth {
 	 *
 	 * @param string $username The username.
 	 * @param string $password The password.
-	 * @param mixed $custom_auth The custom auth data (if any).
+	 * @param mixed  $custom_auth The custom auth data (if any).
 	 *
 	 * @return WP_User|WP_Error $user Returns WP_User object if success, or WP_Error if failed.
 	 */
@@ -165,7 +154,6 @@ class Auth {
 	 * Get token by sending POST request to jwt-auth/v1/token.
 	 *
 	 * @param WP_REST_Request $request The request.
-	 *
 	 * @return WP_REST_Response The response.
 	 */
 	public function get_token( WP_REST_Request $request ) {
@@ -237,8 +225,8 @@ class Auth {
 	/**
 	 * Generate access token.
 	 *
-	 * @param \WP_User $user The WP_User object.
-	 * @param bool $return_raw Whether or not to return as raw token string.
+	 * @param WP_User $user The WP_User object.
+	 * @param bool    $return_raw Whether or not to return as raw token string.
 	 *
 	 * @return WP_REST_Response|string Return as raw token string or as a formatted WP_REST_Response.
 	 */
@@ -432,7 +420,6 @@ class Auth {
 	 * Determine if given response is an error response.
 	 *
 	 * @param mixed $response The response.
-	 *
 	 * @return boolean
 	 */
 	public function is_error_response( $response ) {
@@ -484,7 +471,7 @@ class Auth {
 		 * The HTTP_AUTHORIZATION is present, verify the format.
 		 * If the format is wrong return the user.
 		 */
-		list( $token ) = sscanf( $auth, 'Bearer %s' );
+		list($token) = sscanf( $auth, 'Bearer %s' );
 
 		if ( ! $token ) {
 			return new WP_REST_Response(
@@ -518,7 +505,7 @@ class Auth {
 		// Try to decode the token.
 		try {
 			$alg     = $this->get_alg();
-			$payload = JWT::decode( $token, new Key( $secret_key, $alg ) );
+			$payload = JWT::decode( $token, new Key( $secret_key , $alg ));
 
 			// The Token is decoded now validate the iss.
 			if ( $payload->iss !== $this->get_iss() ) {
@@ -624,7 +611,6 @@ class Auth {
 	 * Validates refresh token and generates a new refresh token.
 	 *
 	 * @param WP_REST_Request $request The request.
-	 *
 	 * @return WP_REST_Response Returns WP_REST_Response.
 	 */
 	public function refresh_token( \WP_REST_Request $request ) {
@@ -857,7 +843,6 @@ class Auth {
 	 * This is our Middleware to try to authenticate the user according to the token sent.
 	 *
 	 * @param int|bool $user_id User ID if one has been determined, false otherwise.
-	 *
 	 * @return int|bool User ID if one has been determined, false otherwise.
 	 */
 	public function determine_current_user( $user_id ) {
@@ -905,8 +890,8 @@ class Auth {
 	 * Filter to hook the rest_pre_dispatch, if there is an error in the request
 	 * send it, if there is no error just continue with the current request.
 	 *
-	 * @param mixed $result Can be anything a normal endpoint can return, or null to not hijack the request.
-	 * @param WP_REST_Server $server Server instance.
+	 * @param mixed           $result Can be anything a normal endpoint can return, or null to not hijack the request.
+	 * @param WP_REST_Server  $server Server instance.
 	 * @param WP_REST_Request $request The request.
 	 *
 	 * @return mixed $result
