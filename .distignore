@@ -13,3 +13,7 @@ docker_tag
 Dockerfile-php-build
 output.log
 phpcs.xml
+tests
+.gitattributes
+FUNDING.yml
+phpunit.xml.dist
