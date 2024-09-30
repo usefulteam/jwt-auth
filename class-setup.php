@@ -33,8 +33,6 @@ class Setup {
 	public function __construct() {
 		add_action( 'init', array( $this, 'setup_text_domain' ) );
 
-		$this->auth    = new Auth();
-		$this->devices = new Devices();
 
 		add_action( 'rest_api_init', array( $this->auth, 'register_rest_routes' ) );
 		add_filter( 'rest_api_init', array( $this->auth, 'add_cors_support' ) );

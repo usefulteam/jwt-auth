@@ -344,6 +344,16 @@ If the token is invalid an error will be returned. Here are some samples of erro
 }
 `
 
+`
+{
+	"success": false,
+	"statusCode": 401,
+	"code": "jwt_auth_invalid_refresh_token",
+	"message": "Invalid token type",
+	"data": []
+}
+`
+
 = Obsolete Refresh Token =
 
 `

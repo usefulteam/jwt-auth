@@ -115,6 +115,7 @@ You can use the optional parameter `device` with the device identifier to let us
 	"message": "Credential is valid",
 	"data": {
 		"token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvcG9pbnRzLmNvdXZlZS5jby5pZCIsImlhdCI6MTU4ODQ5OTE0OSwibmJmIjoxNTg4NDk5MTQ5LCJleHAiOjE1ODkxMDM5NDksImRhdGEiOnsidXNlciI6eyJpZCI6MX19fQ.w3pf5PslhviHohmiGF-JlPZV00XWE9c2MfvBK7Su9Fw",
+		"refresh_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvcG9pbnRzLmNvdXZlZS5jby5pZCIsImlhdCI6MTU4ODQ5OTE0OSwibmJmIjoxNTg4NDk5MTQ5LCJleHAiOjE1ODkxMDM5NDksImRhdGEiOnsidXNlciI6eyJpZCI6MX19fQ.w3pf5PslhviHohmiGF-JlPZV00XWE9c2MfvBK7Su9Fw",
 		"id": 1,
 		"email": "contactjavas@gmail.com",
 		"nicename": "contactjavas",
@@ -217,10 +218,24 @@ This means that a refresh token cannot be shared. To allow multiple devices to a
 curl -F device="abc-def" -F username=myuser -F password=mypass /wp-json/jwt-auth/v1/token
 ```
 ```sh
-curl -F device="abc-def" -b "refresh_token=123.abcdef..." /wp-json/jwt-auth/v1/token
+# For a cookie flow
+curl -F device="abc-def" -b "refresh_token=eyJ0eXAiOi..." /wp-json/jwt-auth/v1/token
+
+# For a body flow
+curl -F device="abc-def" -d "refresh_token=eyJ0eXAiOi..." /wp-json/jwt-auth/v1/token
+
+# For a parameter flow
+curl -F device="abc-def" "/wp-json/jwt-auth/v1/token?refresh_token=eyJ0eXAiOi..."
 ```
 ```sh
-curl -F device="abc-def" -b "refresh_token=123.abcdef..." /wp-json/jwt-auth/v1/token/refresh
+# For a cookie flow
+curl -F device="abc-def" -b "refresh_token=eyJ0eXAiOi..." /wp-json/jwt-auth/v1/token/refresh
+
+# For a body flow
+curl -F device="abc-def" -d "refresh_token=eyJ0eXAiOi..." /wp-json/jwt-auth/v1/token/refresh
+
+# For a parameter flow
+curl -F device="abc-def" "/wp-json/jwt-auth/v1/token/refresh?refresh_token=eyJ0eXAiOi..."
 ```
 
 
@@ -331,7 +346,17 @@ If the token is invalid an error will be returned. Here are some samples of erro
 	"success": false,
 	"statusCode": 401,
 	"code": "jwt_auth_invalid_refresh_token",
-	"message": "Invalid refresh token",
+	"message": "Device not found in the refresh token.",
+	"data": []
+}
+```
+
+```json
+{
+	"success": false,
+	"statusCode": 401,
+	"code": "jwt_auth_invalid_refresh_token",
+	"message": "Invalid token type",
 	"data": []
 }
 ```
@@ -392,6 +417,36 @@ add_filter(
 );
 ```
 
+
+### jwt_auth_flow
+
+The **jwt_auth_flow** allows you to decide which flow use for current request.
+
+The supported options are:
+- cookie __*(default)*__
+- body
+- query
+- header
+
+To enable the desired refresh token flow add an hook to your theme's functions.php file.
+```php
+/**
+ * Change the flow for refresh token.
+ *
+ * @param string $flow The current flow.
+ */
+add_filter(
+	'jwt_auth_flow',
+	function ( $headers ) {
+	if (wp_doing_ajax()) {
+		// Modify the flow here.
+        return 'body';
+	}
+	return $flow;
+);
+```
+
+This value will be used to establish from with part of the request the refresh token will be taken.
 
 ### jwt_auth_authorization_header
 
@@ -455,6 +510,8 @@ add_filter(
 
 ### jwt_auth_not_before
 
+#### alias for [jwt_auth_toke_not_before](#jwt_auth_token_not_before)
+
 The `jwt_auth_not_before` allows you to change the [**nbf**](https://tools.ietf.org/html/rfc7519#section-4.1.5) value before the payload is encoded to be a token
 
 Default Value:
@@ -486,7 +543,42 @@ add_filter(
 );
 ```
 
+### jwt_auth_token_not_before
+
+The `jwt_auth_token_not_before` allows you to change the [**nbf**](https://tools.ietf.org/html/rfc7519#section-4.1.5) value before the payload is encoded to be a token
+
+Default Value:
+
+```
+// Creation time.
+time()
+```
+
+Usage example:
+
+```php
+/**
+ * Change the token's nbf value.
+ *
+ * @param int $not_before The default "nbf" value in timestamp.
+ * @param int $issued_at The "iat" value in timestamp.
+ *
+ * @return int The "nbf" value.
+ */
+add_filter(
+	'jwt_auth_token_not_before',
+	function ( $not_before, $issued_at ) {
+		// Modify the "not_before" here.
+		return $not_before;
+	},
+	10,
+	2
+);
+```
+
 ### jwt_auth_expire
+
+#### alias for [jwt_auth_token_expire](#jwt_auth_token_expire)
 
 The `jwt_auth_expire` allows you to change the [**exp**](https://tools.ietf.org/html/rfc7519#section-4.1.4) value before the payload is encoded to be a token
 
@@ -518,9 +610,77 @@ add_filter(
 );
 ```
 
+
+### jwt_auth_token_expire
+
+The `jwt_auth_token_expire` allows you to change the [**exp**](https://tools.ietf.org/html/rfc7519#section-4.1.4) value before the payload is encoded to be a token
+
+Default Value:
+
+```
+time() + (MINUTE_IN_SECONDS * 10)
+```
+
+Usage example:
+
+```php
+/**
+ * Change the token's expire value.
+ *
+ * @param int $expire The default "exp" value in timestamp.
+ * @param int $issued_at The "iat" value in timestamp.
+ *
+ * @return int The "nbf" value.
+ */
+add_filter(
+	'jwt_auth_token_expire',
+	function ( $expire, $issued_at ) {
+		// Modify the "expire" here.
+		return $expire;
+	},
+	10,
+	2
+);
+```
+
+
+
+### jwt_auth_refresh_not_before
+
+The `jwt_auth_refresh_not_before` allows you to change the [**nbf**](https://tools.ietf.org/html/rfc7519#section-4.1.5) value before the payload is encoded to be a refresh token
+
+Default Value:
+
+```
+// Creation time.
+time()
+```
+
+Usage example:
+
+```php
+/**
+ * Change the refresh token's nbf value.
+ *
+ * @param int $not_before The default "nbf" value in timestamp.
+ * @param int $issued_at The "iat" value in timestamp.
+ *
+ * @return int The "nbf" value.
+ */
+add_filter(
+	'jwt_auth_refresh_not_before',
+	function ( $not_before, $issued_at ) {
+		// Modify the "not_before" here.
+		return $not_before;
+	},
+	10,
+	2
+);
+```
+
 ### jwt_auth_refresh_expire
 
-The `jwt_auth_refresh_expire` filter hook allows you to change the expiration date of the refresh token.
+The `jwt_auth_refresh_expire` filter hook allows you to change the [**exp**](https://tools.ietf.org/html/rfc7519#section-4.1.4) value before the payload is encoded to be a refresh token
 
 Default Value:
 
@@ -750,15 +910,15 @@ add_filter(
 There are end-to-end tests you can run to confirm that the API works correctly:
 
 ```console
-$ URL=https://example.local USERNAME=myuser PASSWORD=mypass composer run test
+$ URL=https://example.local USERNAME=myuser PASSWORD=mypass FLOW=cookie composer run test
 > ./vendor/bin/phpunit
-PHPUnit 9.5.13 by Sebastian Bergmann and contributors.
+PHPUnit 9.5.25 #StandWithUkraine
 
-.............                                                     13 / 13 (100%)
+...............                                                   15 / 15 (100%)
 
-Time: 00:12.377, Memory: 6.00 MB
+Time: 00:48.086, Memory: 8.00 MB
 
-OK (13 tests, 110 assertions)
+OK (15 tests, 143 assertions)
 ```
 
 
