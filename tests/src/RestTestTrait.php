@@ -28,7 +28,7 @@ trait RestTestTrait {
   protected ?string $refreshToken;
 
   protected function setUp(): void {
-    $this->cookies          = new CookieJar();
+    $this->cookies = new CookieJar();
     $this->httpClientConfig = [
       'base_uri' => $_ENV['URL'] ?? 'http://localhost',
       'http_errors' => false,
@@ -48,28 +48,27 @@ trait RestTestTrait {
         CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4,
       ],
     ];
-    if ( in_array( '--debug', $_SERVER['argv'], true ) ) {
+    if (in_array('--debug', $_SERVER['argv'], true)) {
       $this->httpClientConfig['debug'] = true;
     }
-    $this->client   = new Client( $this->httpClientConfig );
+    $this->client = new Client($this->httpClientConfig);
     $this->username = $_ENV['USERNAME'] ?? null;
     $this->password = $_ENV['PASSWORD'] ?? null;
-    $this->flow     = $_ENV['FLOW'];
+    $this->flow = $_ENV['FLOW'];
   }
 
-  protected function setCookie( $name, $value, $domain ): CookieJar {
-    $this->cookies->setCookie( new SetCookie( [
-      'Domain'  => $domain,
-      'Name'    => $name,
-      'Value'   => $value,
-      'Discard' => true,
-    ] ) );
-
+  protected function setCookie($name, $value, $domain): CookieJar {
+    $this->cookies->setCookie(new SetCookie([
+        'Domain'  => $domain,
+        'Name'    => $name,
+        'Value'   => $value,
+        'Discard' => true,
+    ]));
     return $this->cookies;
   }
 
   protected function getDomain(): string {
-    return parse_url( $this->httpClientConfig['base_uri'], PHP_URL_HOST );
+    return parse_url($this->httpClientConfig['base_uri'], PHP_URL_HOST);
   }
 
 }
