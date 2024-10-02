@@ -1,19 +1,18 @@
 /.wordpress-org
 /.git
 /.github
+/tests
 
-.distignore
+.gitattributes
 .gitignore
-
-README.md
+.distignore
 composer.json
 composer.lock
 DOCKER_ENV
 docker_tag
 Dockerfile-php-build
+FUNDING.yml
 output.log
 phpcs.xml
-/tests
-.gitattributes
-FUNDING.yml
 phpunit.xml.dist
+README.md
