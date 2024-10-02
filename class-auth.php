@@ -178,7 +178,22 @@ class Auth {
 			);
 		}
 
-		if ( isset( $_COOKIE['refresh_token'] ) ) {
+		if ( ( isset( $username ) && ! isset( $password ) )
+			|| ( ! isset( $username ) && isset( $password ) ) 
+			|| ! isset( $_COOKIE['refresh_token'] ) ) {
+			$user = new WP_Error(
+				'jwt_auth_missing_credentials',
+				__( 'Username and password are required', 'jwt-auth' ),
+				array(
+					'status' => 400,
+				)
+			);
+		}
+
+		if ( isset( $username ) && isset( $password ) ) {
+			$user = $this->authenticate_user( $username, $password, $custom_auth );
+		}
+		elseif ( isset( $_COOKIE['refresh_token'] ) ) {
 			$device  = $request->get_param( 'device' ) ?: '';
 			$user_id = $this->validate_refresh_token( $_COOKIE['refresh_token'], $device );
 
@@ -187,8 +202,16 @@ class Auth {
 				return $user_id;
 			}
 			$user = get_user_by( 'id', $user_id );
-		} else {
-			$user = $this->authenticate_user( $username, $password, $custom_auth );
+
+			if ( ! $user ) {
+				$user = new WP_Error(
+					'jwt_auth_invalid_refresh_token',
+					__( 'Invalid refresh token', 'jwt-auth' ),
+					array(
+						'status' => 401,
+					)
+				);
+			}
 		}
 
 		// If the authentication is failed return error response.
@@ -465,8 +488,8 @@ class Auth {
 					array(
 						'success'    => false,
 						'statusCode' => 401,
-						'code'       => 'jwt_auth_user_not_found',
-						'message'    => __( "User doesn't exist", 'jwt-auth' ),
+						'code'       => 'jwt_auth_invalid_token',
+						'message'    => __( "Invalid token", 'jwt-auth' ),
 						'data'       => array(),
 					),
 					401

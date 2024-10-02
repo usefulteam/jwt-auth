@@ -296,6 +296,18 @@ If the token is invalid an error will be returned. Here are some samples of erro
 }
 `
 
+= Missing Username and / or Password or Refresh Token =
+
+`
+{
+	"success": false,
+	"statusCode": 400,
+	"code": "jwt_auth_missing_credentials",
+	"message": "Username and password are required",
+	"data": []
+}
+`
+
 = User Not Found =
 
 `
@@ -803,6 +815,9 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 3. Other error responses
 
 == Changelog ==
+= 3.0.x =
+- Fix: Prioritise authentication with user credentials over refresh token if both are sent.
+
 = 3.0.2 =
 - Fix: Do not revalidate authentication headers if a valid user was determined already. (#75)
 - Fix: Added debugging timeframe before purging refresh tokens. (#93)
