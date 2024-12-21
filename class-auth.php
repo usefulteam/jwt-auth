@@ -238,7 +238,8 @@ class Auth {
 			$this->send_refresh_token( $user, $request );
 		}
 
-		return $response;
+		// Let the user modify the data before send it back.
+		return apply_filters( 'jwt_auth_valid_credential_response', $response, $user );
 	}
 
 	/**
@@ -280,7 +281,7 @@ class Auth {
 		}
 
 		// The token is signed, now create object with basic info of the user.
-		$response = array(
+		return array(
 			'success'    => true,
 			'statusCode' => 200,
 			'code'       => 'jwt_auth_valid_credential',
@@ -295,9 +296,6 @@ class Auth {
 				'displayName' => $user->display_name,
 			),
 		);
-
-		// Let the user modify the data before send it back.
-		return apply_filters( 'jwt_auth_valid_credential_response', $response, $user );
 	}
 
 	/**
