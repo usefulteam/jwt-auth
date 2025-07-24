@@ -58,7 +58,7 @@ class Setup {
 	 * Setup textdomain.
 	 */
 	public function setup_text_domain() {
-		load_plugin_textdomain( 'jwt-auth', false, plugin_basename( dirname( __FILE__ ) ) . '/languages' );
+		load_plugin_textdomain( 'jwt-auth', false, plugin_basename( __DIR__ ) . '/languages' );
 	}
 
 	/**

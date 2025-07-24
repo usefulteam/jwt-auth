@@ -36,13 +36,6 @@ class Auth {
 	private $jwt_error = null;
 
 	/**
-	 * Collection of translate-able messages.
-	 *
-	 * @var array
-	 */
-	private $messages = array();
-
-	/**
 	 * The REST API slug.
 	 *
 	 * @var string
@@ -54,11 +47,6 @@ class Auth {
 	 */
 	public function __construct() {
 		$this->namespace = 'jwt-auth/v1';
-
-		$this->messages = array(
-			'jwt_auth_no_auth_header'  => __( 'Authorization header not found.', 'jwt-auth' ),
-			'jwt_auth_bad_auth_header' => __( 'Authorization header malformed.', 'jwt-auth' ),
-		);
 	}
 
 	/**
@@ -402,7 +390,7 @@ class Auth {
 					'success'    => false,
 					'statusCode' => 401,
 					'code'       => 'jwt_auth_no_auth_header',
-					'message'    => $this->messages['jwt_auth_no_auth_header'],
+					'message'    => __( 'Authorization header not found.', 'jwt-auth' ),
 					'data'       => array(),
 				),
 				401
@@ -421,7 +409,7 @@ class Auth {
 					'success'    => false,
 					'statusCode' => 401,
 					'code'       => 'jwt_auth_bad_auth_header',
-					'message'    => $this->messages['jwt_auth_bad_auth_header'],
+					'message'    => __( 'Authorization header malformed.', 'jwt-auth' ),
 					'data'       => array(),
 				),
 				401
