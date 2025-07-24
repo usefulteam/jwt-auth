@@ -4,7 +4,7 @@ Contributors: contactjavas, tha_sun, dominic_ks
 Tags: jwt, jwt-auth, token-authentication, json-web-token
 Requires at least: 5.2
 Tested up to: 6.5.3
-Stable tag: 3.0.2
+Stable tag: 3.0.3
 Requires PHP: 7.2
 License: GPLv3
 License URI: https://oss.ninja/gpl-3.0?organization=Useful%20Team&project=WordPress%20JWT%20Auth
@@ -815,7 +815,7 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 3. Other error responses
 
 == Changelog ==
-= 3.0.x =
+= 3.0.3 =
 - Fix: Prioritise authentication with user credentials over refresh token if both are sent.
 
 = 3.0.2 =
