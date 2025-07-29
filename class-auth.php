@@ -167,8 +167,7 @@ class Auth {
 		}
 
 		if ( ( isset( $username ) && ! isset( $password ) )
-			|| ( ! isset( $username ) && isset( $password ) ) 
-			|| ! isset( $_COOKIE['refresh_token'] ) ) {
+			|| ( ! isset( $username ) && isset( $password ) ) ) {
 			$user = new WP_Error(
 				'jwt_auth_missing_credentials',
 				__( 'Username and password are required', 'jwt-auth' ),
@@ -180,25 +179,29 @@ class Auth {
 
 		if ( isset( $username ) && isset( $password ) ) {
 			$user = $this->authenticate_user( $username, $password, $custom_auth );
-		}
-		elseif ( isset( $_COOKIE['refresh_token'] ) ) {
-			$device  = $request->get_param( 'device' ) ?: '';
-			$user_id = $this->validate_refresh_token( $_COOKIE['refresh_token'], $device );
-
-			// If we receive a REST response, then validation failed.
-			if ( $user_id instanceof WP_REST_Response ) {
-				return $user_id;
+		} else {
+			// Check for refresh_token in request body first, then fallback to cookie.
+			$refresh_token = $request->get_param( 'refresh_token' );
+			if ( ! $refresh_token && isset( $_COOKIE['refresh_token'] ) ) {
+				$refresh_token = $_COOKIE['refresh_token'];
 			}
-			$user = get_user_by( 'id', $user_id );
-
-			if ( ! $user ) {
-				$user = new WP_Error(
-					'jwt_auth_invalid_refresh_token',
-					__( 'Invalid refresh token', 'jwt-auth' ),
-					array(
-						'status' => 401,
-					)
-				);
+			if ( $refresh_token ) {
+				$device  = $request->get_param( 'device' ) ?: '';
+				$user_id = $this->validate_refresh_token( $refresh_token, $device );
+				// If we receive a REST response, then validation failed.
+				if ( $user_id instanceof WP_REST_Response ) {
+					return $user_id;
+				}
+				$user = get_user_by( 'id', $user_id );
+				if ( ! $user ) {
+					$user = new WP_Error(
+						'jwt_auth_invalid_refresh_token',
+						__( 'Invalid refresh token', 'jwt-auth' ),
+						array(
+							'status' => 401,
+						)
+					);
+				}
 			}
 		}
 
@@ -221,9 +224,14 @@ class Auth {
 		// Valid credentials, the user exists, let's generate the token.
 		$response = $this->generate_token( $user, false );
 
-		// Add the refresh token as a HttpOnly cookie to the response.
+		// Add the refresh token as a HttpOnly cookie to the response and also to the response body.
 		if ( $username && $password ) {
-			$this->send_refresh_token( $user, $request );
+			$device = $request->get_param( 'device' ) ?: '';
+			$refresh_token_data = $this->generate_refresh_token( $user, $device );
+			$this->send_refresh_token( $user, $refresh_token_data );
+			if ( is_array( $response ) ) {
+				$response['data']['refresh_token'] = $refresh_token_data['token'];
+			}
 		}
 
 		return $response;
@@ -296,10 +304,16 @@ class Auth {
 	 *
 	 * @return void
 	 */
-	public function send_refresh_token( \WP_User $user, \WP_REST_Request $request ) {
-		$device = $request->get_param( 'device' ) ?: '';
-		$token_data = $this->generate_refresh_token( $user, $device );
-		setcookie( 'refresh_token', $user->ID . '.' . $token_data['token'], $token_data['expires'], COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
+
+	/**
+	 * Sets the refresh token as a cookie.
+	 *
+	 * @param \WP_User $user The WP_User object.
+	 * @param array $token_data The refresh token data array.
+	 * @return void
+	 */
+	public function send_refresh_token( \WP_User $user, array $token_data ) {
+		setcookie( 'refresh_token', $token_data['token'], $token_data['expires'], COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
 	}
 
 	/**
@@ -335,7 +349,7 @@ class Auth {
 		update_user_meta( $user->ID, 'jwt_auth_refresh_tokens_expires_next', $expires_next );
 
 		return array(
-			'token'   => $refresh_token,
+			'token'   => $user->ID . '.' . $refresh_token,
 			'expires' => $expires,
 			'device'  => $device,
 		);
@@ -553,33 +567,41 @@ class Auth {
 	 * @return WP_REST_Response Returns WP_REST_Response.
 	 */
 	public function refresh_token( WP_REST_Request $request ) {
-		if ( ! isset( $_COOKIE['refresh_token'] ) ) {
-			return new WP_REST_Response(
-				array(
-					'success'    => false,
-					'statusCode' => 401,
-					'code'       => 'jwt_auth_no_auth_cookie',
-					'message'    => __( 'Refresh token cookie not found.', 'jwt-auth' ),
-				),
-				401
-			);
+		// Check for refresh token in request body first, then fallback to cookie.
+		$refresh_token = $request->get_param( 'refresh_token' );
+		if ( ! $refresh_token ) {
+			if ( isset( $_COOKIE['refresh_token'] ) ) {
+				$refresh_token = $_COOKIE['refresh_token'];
+			} else {
+				return new WP_REST_Response(
+					array(
+						'success'    => false,
+						'statusCode' => 401,
+						'code'       => 'jwt_auth_no_auth_cookie',
+						'message'    => __( 'Refresh token not provided.', 'jwt-auth' ),
+					),
+					401
+				);
+			}
 		}
 		$device = $request->get_param( 'device' ) ?: '';
 
-		$user_id = $this->validate_refresh_token( $_COOKIE['refresh_token'], $device );
+		$user_id = $this->validate_refresh_token( $refresh_token, $device );
 		if ( $user_id instanceof WP_REST_Response ) {
 			return $user_id;
 		}
 
 		// Generate a new access token.
 		$user = get_user_by( 'id', $user_id );
-		$this->send_refresh_token( $user, $request );
+		$refresh_token_data = $this->generate_refresh_token( $user, $device );
+		$this->send_refresh_token( $user, $refresh_token_data );
 
 		$response = array(
 			'success'    => true,
 			'statusCode' => 200,
 			'code'       => 'jwt_auth_valid_token',
 			'message'    => __( 'Token is valid', 'jwt-auth' ),
+			'refresh_token' => $refresh_token_data['token'],
 		);
 		return new WP_REST_Response( $response );
 	}
@@ -591,8 +613,8 @@ class Auth {
 	 * @param string $device The device of the refresh token.
 	 * @return int|WP_REST_Response Returns user ID if valid or WP_REST_Response on error.
 	 */
-	public function validate_refresh_token( $refresh_token_cookie, $device ) {
-		$parts = explode( '.', $refresh_token_cookie );
+	public function validate_refresh_token( $refresh_token_value, $device ) {
+		$parts = explode( '.', $refresh_token_value );
 		if ( count( $parts ) !== 2 || empty( intval( $parts[0] ) ) || empty( $parts[1] ) ) {
 			return new WP_REST_Response(
 				array(
