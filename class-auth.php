@@ -224,13 +224,19 @@ class Auth {
 		// Valid credentials, the user exists, let's generate the token.
 		$response = $this->generate_token( $user, false );
 
-		// Add the refresh token as a HttpOnly cookie to the response and also to the response body.
+		// Determine transport for refresh token: 'cookie' (default) or 'body'.
 		if ( $username && $password ) {
 			$device = $request->get_param( 'device' ) ?: '';
 			$refresh_token_data = $this->generate_refresh_token( $user, $device );
-			$this->send_refresh_token( $user, $refresh_token_data );
-			if ( is_array( $response ) ) {
-				$response['data']['refresh_token'] = $refresh_token_data['token'];
+			$token_transport = $request->get_param( 'token_transport' );
+			if ( $token_transport === 'body' ) {
+				// Invalidate any existing cookie using invalidate_cookie.
+				$this->invalidate_cookie();
+				if ( is_array( $response ) ) {
+					$response['data']['refresh_token'] = $refresh_token_data['token'];
+				}
+			} else { // Default: set cookie
+				$this->send_refresh_token( $user, $refresh_token_data );
 			}
 		}
 
@@ -314,6 +320,15 @@ class Auth {
 	 */
 	public function send_refresh_token( \WP_User $user, array $token_data ) {
 		setcookie( 'refresh_token', $token_data['token'], $token_data['expires'], COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
+	}
+
+	/**
+	 * Invalidates the refresh token cookie.
+	 *
+	 * @return void
+	 */
+	public function invalidate_cookie() {
+		setcookie( 'refresh_token', '', time() - 3600, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
 	}
 
 	/**
@@ -591,19 +606,31 @@ class Auth {
 			return $user_id;
 		}
 
-		// Generate a new access token.
+		// Generate a new access token and refresh token.
 		$user = get_user_by( 'id', $user_id );
 		$refresh_token_data = $this->generate_refresh_token( $user, $device );
-		$this->send_refresh_token( $user, $refresh_token_data );
-
-		$response = array(
-			'success'    => true,
-			'statusCode' => 200,
-			'code'       => 'jwt_auth_valid_token',
-			'message'    => __( 'Token is valid', 'jwt-auth' ),
-			'refresh_token' => $refresh_token_data['token'],
-		);
-		return new WP_REST_Response( $response );
+		$token_transport = $request->get_param( 'token_transport' );
+		if ( $token_transport === 'body' ) {
+			// Invalidate any existing cookie using invalidate_cookie.
+			$this->invalidate_cookie();
+			$response = array(
+				'success'    => true,
+				'statusCode' => 200,
+				'code'       => 'jwt_auth_valid_token',
+				'message'    => __( 'Token is valid', 'jwt-auth' ),
+				'refresh_token' => $refresh_token_data['token'],
+			);
+			return new WP_REST_Response( $response );
+		} else { // Default: set cookie
+			$this->send_refresh_token( $user, $refresh_token_data );
+			$response = array(
+				'success'    => true,
+				'statusCode' => 200,
+				'code'       => 'jwt_auth_valid_token',
+				'message'    => __( 'Token is valid', 'jwt-auth' ),
+			);
+			return new WP_REST_Response( $response );
+		}
 	}
 
 	/**
