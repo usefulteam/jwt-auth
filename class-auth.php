@@ -297,21 +297,28 @@ class Auth {
 	 * @return void
 	 */
 	public function send_refresh_token( \WP_User $user, \WP_REST_Request $request ) {
+		$device = $request->get_param( 'device' ) ?: '';
+		$token_data = $this->generate_refresh_token( $user, $device );
+		setcookie( 'refresh_token', $user->ID . '.' . $token_data['token'], $token_data['expires'], COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
+	}
+
+	/**
+	 * Generates and stores a new refresh token for a user/device, returns token data.
+	 *
+	 * @param \WP_User $user The WP_User object.
+	 * @param string $device The device identifier.
+	 * @return array Returns array with 'token', 'expires', and 'device'.
+	 */
+	public function generate_refresh_token( \WP_User $user, string $device ) {
 		$refresh_token = bin2hex( random_bytes( 32 ) );
 		$created       = time();
 		$expires       = $created + DAY_IN_SECONDS * 30;
 		$expires       = apply_filters( 'jwt_auth_refresh_expire', $expires, $created );
 
-		setcookie( 'refresh_token', $user->ID . '.' . $refresh_token, $expires, COOKIEPATH, COOKIE_DOMAIN, is_ssl(), true );
-
-		// Save new refresh token for the user, replacing the previous one.
-		// The refresh token is rotated for the passed device only, not affecting
-		// other devices.
 		$user_refresh_tokens = get_user_meta( $user->ID, 'jwt_auth_refresh_tokens', true );
 		if ( ! is_array( $user_refresh_tokens ) ) {
 			$user_refresh_tokens = array();
 		}
-		$device = $request->get_param( 'device' ) ?: '';
 		$user_refresh_tokens[ $device ] = array(
 			'token'   => $refresh_token,
 			'expires' => $expires,
@@ -320,12 +327,18 @@ class Auth {
 
 		// Store next expiry for cron_purge_expired_refresh_tokens event.
 		$expires_next = $expires;
-		foreach ( $user_refresh_tokens as $device ) {
-			if ( $device['expires'] < $expires_next ) {
-				$expires_next = $device['expires'];
+		foreach ( $user_refresh_tokens as $device_data ) {
+			if ( $device_data['expires'] < $expires_next ) {
+				$expires_next = $device_data['expires'];
 			}
 		}
 		update_user_meta( $user->ID, 'jwt_auth_refresh_tokens_expires_next', $expires_next );
+
+		return array(
+			'token'   => $refresh_token,
+			'expires' => $expires,
+			'device'  => $device,
+		);
 	}
 
 	/**
