@@ -480,8 +480,8 @@ class Auth {
 					array(
 						'success'    => false,
 						'statusCode' => 401,
-						'code'       => 'jwt_auth_user_not_found',
-						'message'    => $has_l10n ? __( "User doesn't exist", 'jwt-auth' ) : "User doesn't exist",
+						'code'       => 'jwt_auth_invalid_token',
+						'message'    => $has_l10n ? __( "Invalid token", 'jwt-auth' ) : "Invalid token",
 						'data'       => array(),
 					),
 					401
