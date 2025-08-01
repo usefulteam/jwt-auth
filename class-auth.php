@@ -374,7 +374,7 @@ class Auth {
 	public function validate_token( $return_response = true ) {
 		global $l10n;
 
-		$has_l10n = isset( $l10n[ 'jwt_auth' ] );
+		$has_l10n = isset( $l10n[ 'jwt-auth' ] );
 
 		/**
 		 * Looking for the HTTP_AUTHORIZATION header, if not present just
