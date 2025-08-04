@@ -816,7 +816,7 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 
 == Changelog ==
 = 3.0.x =
-- Fix: Gettext string translation is invoked before gettext domain is loaded.
+- Fix: String translation is invoked before gettext domain is loaded.
 - Fix: Prioritise authentication with user credentials over refresh token if both are sent.
 
 = 3.0.2 =
