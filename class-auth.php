@@ -133,7 +133,7 @@ class Auth {
 			 */
 			$user = apply_filters( 'jwt_auth_do_custom_auth', $custom_auth_error, $username, $password, $custom_auth );
 		} else {
-			$user = wp_authenticate( $username, $password );
+			$user = wp_authenticate($username, wp_slash($password));
 		}
 
 		return $user;
