@@ -14,8 +14,14 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 
-use Firebase\JWT\JWT;
-use Firebase\JWT\Key;
+// use Firebase\JWT\JWT;
+// use Firebase\JWT\Key;
+/**
+ * Using the wrapper class to help avoid plugin conflicts such as.
+ * https://github.com/usefulteam/jwt-auth/issues/82
+ */
+use JWTWrapAuth\Firebase\JWT\JWT;
+use JWTWrapAuth\Firebase\JWT\Key;
 
 /**
  * The public-facing functionality of the plugin.
