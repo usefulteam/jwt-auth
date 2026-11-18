@@ -831,6 +831,7 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 - Fix: Prioritise authentication with user credentials over refresh token if both are sent. (#130)
 - Readme: the plugin name now matches the plugin header (JWT Auth).
 - Tested up to WordPress 7.1.
+- Note: If you think a refresh token may have been exposed, change that user's password: this now revokes all of their refresh tokens.
 
 = 3.0.2 =
 - Fix: Do not revalidate authentication headers if a valid user was determined already. (#75)
@@ -917,4 +918,5 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 - Working version.
 
 == Upgrade Notice ==
-Just update the plugin
+= 3.0.3 =
+Security fix: refresh tokens are revoked when a password changes or a device is removed. Apps sending JSON with a device log in again once. If a refresh token may have been exposed, change that user's password.
