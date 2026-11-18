@@ -1,4 +1,4 @@
-=== JWT Auth - WordPress JSON Web Token Authentication ===
+=== JWT Auth ===
 
 Contributors: contactjavas, tha_sun, dominic_ks
 Tags: jwt, jwt-auth, token-authentication, json-web-token
@@ -829,6 +829,7 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 - Fix: Infinite recursion in determine_current_user caused by get_user_locale(). (#142)
 - Fix: String translation is invoked before gettext domain is loaded. (#139)
 - Fix: Prioritise authentication with user credentials over refresh token if both are sent. (#130)
+- Readme: the plugin name now matches the plugin header (JWT Auth).
 - Tested up to WordPress 7.1.
 
 = 3.0.2 =
