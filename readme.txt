@@ -3,8 +3,8 @@
 Contributors: contactjavas, tha_sun, dominic_ks
 Tags: jwt, jwt-auth, token-authentication, json-web-token
 Requires at least: 5.2
-Tested up to: 6.5.3
-Stable tag: 3.0.2
+Tested up to: 7.1
+Stable tag: 3.0.3
 Requires PHP: 7.2
 License: GPLv3
 License URI: https://oss.ninja/gpl-3.0?organization=Useful%20Team&project=WordPress%20JWT%20Auth
@@ -220,6 +220,8 @@ By default, each refresh token expires after 30 days.
 Whenever you are authenticating afresh or refreshing the refresh token, only the last issued refresh token remains valid. All previously issued refresh tokens can no longer be used.
 
 This means that a refresh token cannot be shared. To allow multiple devices to authenticate in parallel without losing access after another device re-authenticated, use the parameter `device` with the device identifier to associate the refresh token only with that device.
+
+All refresh tokens of a user are revoked when their password is changed or reset. Removing a device from the user's connected devices revokes the refresh token of that device; the app must then log in with username and password again.
 
 `
 curl -F device="abc-def" -F username=myuser -F password=mypass /wp-json/jwt-auth/v1/token
@@ -815,9 +817,19 @@ You can help this plugin stay alive and maintained by giving **5 Stars** Rating/
 3. Other error responses
 
 == Changelog ==
-= 3.0.x =
-- Fix: String translation is invoked before gettext domain is loaded.
-- Fix: Prioritise authentication with user credentials over refresh token if both are sent.
+= 3.0.3 =
+- Security: Refresh tokens are revoked when a user's password is changed or reset, including when it is set directly with wp_set_password().
+- Security: Removing a connected device revokes its refresh token. A refresh token can no longer be used for a device that is not in the user's connected devices, and only a login with username and password adds a device.
+- Security: Refresh tokens left behind by earlier versions for removed devices are deleted on update.
+- Security: Connected devices can only be viewed and removed by users who can edit the user.
+- Fix: The device is read in the same way for JSON and form requests, so devices of apps that send JSON are listed and can be removed.
+- Fix: Refresh tokens are compared in constant time.
+- Fix: Escaped output in update notices and sanitized request input.
+- Fix: Translations are loaded by WordPress instead of the plugin.
+- Fix: Infinite recursion in determine_current_user caused by get_user_locale(). (#142)
+- Fix: String translation is invoked before gettext domain is loaded. (#139)
+- Fix: Prioritise authentication with user credentials over refresh token if both are sent. (#130)
+- Tested up to WordPress 7.1.
 
 = 3.0.2 =
 - Fix: Do not revalidate authentication headers if a valid user was determined already. (#75)
