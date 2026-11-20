@@ -182,8 +182,8 @@ class Auth {
 			$user = $this->authenticate_user( $username, $password, $custom_auth );
 		}
 		elseif ( isset( $_COOKIE['refresh_token'] ) ) {
-			$device  = $request->get_param( 'device' ) ?: '';
-			$user_id = $this->validate_refresh_token( $_COOKIE['refresh_token'], $device );
+			$device  = $this->get_request_device( $request );
+			$user_id = $this->validate_refresh_token( sanitize_text_field( wp_unslash( $_COOKIE['refresh_token'] ) ), $device );
 
 			// If we receive a REST response, then validation failed.
 			if ( $user_id instanceof WP_REST_Response ) {
@@ -311,7 +311,7 @@ class Auth {
 		if ( ! is_array( $user_refresh_tokens ) ) {
 			$user_refresh_tokens = array();
 		}
-		$device = $request->get_param( 'device' ) ?: '';
+		$device = $this->get_request_device( $request );
 		$user_refresh_tokens[ $device ] = array(
 			'token'   => $refresh_token,
 			'expires' => $expires,
@@ -555,9 +555,9 @@ class Auth {
 				401
 			);
 		}
-		$device = $request->get_param( 'device' ) ?: '';
+		$device = $this->get_request_device( $request );
 
-		$user_id = $this->validate_refresh_token( $_COOKIE['refresh_token'], $device );
+		$user_id = $this->validate_refresh_token( sanitize_text_field( wp_unslash( $_COOKIE['refresh_token'] ) ), $device );
 		if ( $user_id instanceof WP_REST_Response ) {
 			return $user_id;
 		}
@@ -602,7 +602,7 @@ class Auth {
 		$user_refresh_tokens = get_user_meta( $user_id, 'jwt_auth_refresh_tokens', true );
 		$refresh_token       = $parts[1];
 
-		if ( empty( $user_refresh_tokens[ $device ] ) ) {
+		if ( empty( $user_refresh_tokens[ $device ]['token'] ) ) {
 			return new WP_REST_Response(
 				array(
 					'success'    => false,
@@ -612,7 +612,7 @@ class Auth {
 				),
 				401
 			);
-		} elseif ( $refresh_token !== $user_refresh_tokens[ $device ]['token'] ) {
+		} elseif ( ! hash_equals( (string) $user_refresh_tokens[ $device ]['token'], $refresh_token ) ) {
 			return new WP_REST_Response(
 				array(
 					'success'    => false,
@@ -632,9 +632,33 @@ class Auth {
 				),
 				401
 			);
+		} elseif ( ! Devices::is_refresh_token_device_allowed( $user_id, $device ) ) {
+			// The device was removed from the user's connected devices.
+			Devices::revoke_unlisted_refresh_tokens( $user_id );
+
+			return new WP_REST_Response(
+				array(
+					'success'    => false,
+					'statusCode' => 401,
+					'code'       => 'jwt_auth_invalid_refresh_token',
+					'message'    => __( 'Invalid refresh token', 'jwt-auth' ),
+				),
+				401
+			);
 		}
 
 		return $user_id;
+	}
+
+	/**
+	 * Get the device value a request was sent with.
+	 *
+	 * @param WP_REST_Request $request The request.
+	 * @return string The device value, or an empty string if none.
+	 */
+	private function get_request_device( WP_REST_Request $request ) {
+		$device = $request->get_param( 'device' );
+		return is_scalar( $device ) && $device ? (string) $device : '';
 	}
 
 	/**
@@ -653,7 +677,8 @@ class Auth {
 		 */
 		$this->rest_api_slug = get_option( 'permalink_structure' ) ? rest_get_url_prefix() : '?rest_route=/';
 
-		$valid_api_uri = strpos( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), $this->rest_api_slug );
+		$request_uri   = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+		$valid_api_uri = strpos( $request_uri, $this->rest_api_slug );
 
 		// Skip validation if not a REST API request or a user was determined already.
 		if ( ! $valid_api_uri || $user_id ) {
@@ -664,7 +689,7 @@ class Auth {
 		 * If the request URI is for validate the token don't do anything,
 		 * This avoid double calls to the validate_token function.
 		 */
-		$validate_uri = strpos( sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ), 'token/validate' );
+		$validate_uri = strpos( $request_uri, 'token/validate' );
 
 		if ( $validate_uri > 0 ) {
 			return $user_id;

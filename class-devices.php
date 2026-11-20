@@ -26,10 +26,37 @@ class Devices {
 
 		add_action( 'profile_update', array( $this, 'profile_update' ), 10, 2 );
 		add_action( 'after_password_reset', array( $this, 'after_password_reset' ), 10, 2 );
+		add_action( 'wp_set_password', array( $this, 'after_set_password' ), 10, 2 );
 		add_action( 'user_register', array( $this, 'after_user_creation' ), 10, 1 );
 		
 		add_filter( 'jwt_auth_payload', array( $this, 'jwt_auth_payload' ), 10, 2 );
 		add_filter( 'jwt_auth_extra_token_check', array( $this, 'check_device_and_pass' ), 10, 4 );
+		add_filter( 'rest_request_before_callbacks', array( $this, 'capture_token_request' ), 10, 3 );
+	}
+
+	/**
+	 * The current request to the token endpoint, if any.
+	 *
+	 * @var \WP_REST_Request|null
+	 */
+	private $token_request = null;
+
+	/**
+	 * Remembers a request to the token endpoint, so the device can be read
+	 * from it in the same way as for the refresh token, whether the client
+	 * sent form data or JSON.
+	 *
+	 * @param mixed            $response The response so far.
+	 * @param array            $handler  The route handler.
+	 * @param \WP_REST_Request $request  The request.
+	 *
+	 * @return mixed The response, unchanged.
+	 */
+	public function capture_token_request( $response, $handler, $request ) {
+		if ( $request instanceof \WP_REST_Request && '/jwt-auth/v1/token' === $request->get_route() ) {
+			$this->token_request = $request;
+		}
+		return $response;
 	}
 
 	/**
@@ -42,17 +69,27 @@ class Devices {
 	 */
 	public function jwt_auth_payload( $payload, $user ) {
 
-		$current_device = isset( $_POST['device'] ) ? $this->sanitize_device_name( sanitize_text_field( $_POST['device'] ) ) : ''; // phpcs:ignore
+		if ( $this->token_request ) {
+			$current_device = self::get_device_name( $this->token_request->get_param( 'device' ) );
+			// Only a login with username and password may add a device. A login
+			// with a refresh token must not bring back a device that was removed.
+			$may_add_device = null !== $this->token_request->get_param( 'username' ) && null !== $this->token_request->get_param( 'password' );
+		} else {
+			// A token generated outside the token endpoint, by code that did its own authentication.
+			// The value is sanitized by get_device_name().
+			$current_device = isset( $_POST['device'] ) ? self::get_device_name( wp_unslash( $_POST['device'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+			$may_add_device = true;
+		}
 
 		// Add device identyfier in user meta if parameter was passed.
 		// TODO: considering to use $_SERVER['HTTP_USER_AGENT'] as default value for device in case it is empty.
-		if ( ! empty( $current_device ) ) {
+		if ( ! empty( $current_device ) && $may_add_device ) {
 			$all_devices = get_user_meta( $user->ID, 'jwt_auth_device', false );
 
 			if ( empty( $all_devices ) || ! in_array( $current_device, $all_devices, true ) ) {
 				$data = array(
 					'agent'     => isset( $_SERVER['HTTP_USER_AGENT'] ) ? sanitize_text_field( $_SERVER['HTTP_USER_AGENT'] ) : '', // phpcs:ignore
-					'date'      => date( 'Y-m-d H:i:s', current_time( 'timestamp', 0 ) ),
+					'date'      => current_time( 'mysql' ),
 					'is_mobile' => wp_is_mobile(),
 				);
 
@@ -105,12 +142,99 @@ class Devices {
 	}
 
 	/**
+	 * Get the name a device is listed under from the device value a client sent.
+	 *
+	 * @param mixed $device The device value from the request.
+	 * @return string The device name, or an empty string if none.
+	 */
+	public static function get_device_name( $device ) {
+		if ( ! is_scalar( $device ) ) {
+			return '';
+		}
+		return self::sanitize_device_name( sanitize_text_field( (string) $device ) );
+	}
+
+	/**
+	 * Whether a refresh token for a device may be used.
+	 *
+	 * A refresh token for a named device is valid only while the device is in
+	 * the user's list of connected devices.
+	 *
+	 * @param int    $user_id The user id.
+	 * @param string $device  The device value the refresh token is stored under.
+	 * @return bool
+	 */
+	public static function is_refresh_token_device_allowed( $user_id, $device ) {
+		$device_name = self::get_device_name( $device );
+
+		if ( '' === $device_name ) {
+			return true;
+		}
+
+		return in_array( $device_name, get_user_meta( $user_id, 'jwt_auth_device', false ), true );
+	}
+
+	/**
+	 * Delete the user's refresh tokens that match a condition.
+	 *
+	 * @param int      $user_id The user id.
+	 * @param callable $revoke  Called with the device value of each refresh token; returns true to delete it.
+	 * @return bool Whether any refresh token was deleted.
+	 */
+	public static function revoke_refresh_tokens( $user_id, $revoke ) {
+		$user_refresh_tokens = get_user_meta( $user_id, 'jwt_auth_refresh_tokens', true );
+
+		if ( ! is_array( $user_refresh_tokens ) ) {
+			return false;
+		}
+
+		$revoked = false;
+		foreach ( array_keys( $user_refresh_tokens ) as $device ) {
+			if ( $revoke( (string) $device ) ) {
+				unset( $user_refresh_tokens[ $device ] );
+				$revoked = true;
+			}
+		}
+
+		if ( ! $revoked ) {
+			return false;
+		}
+
+		if ( $user_refresh_tokens ) {
+			update_user_meta( $user_id, 'jwt_auth_refresh_tokens', $user_refresh_tokens );
+			update_user_meta( $user_id, 'jwt_auth_refresh_tokens_expires_next', min( wp_list_pluck( $user_refresh_tokens, 'expires' ) ) );
+		} else {
+			delete_user_meta( $user_id, 'jwt_auth_refresh_tokens' );
+			delete_user_meta( $user_id, 'jwt_auth_refresh_tokens_expires_next' );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Delete the user's refresh tokens for devices that are not in their list
+	 * of connected devices. Earlier versions left these behind when a device
+	 * was removed or the password was changed.
+	 *
+	 * @param int $user_id The user id.
+	 * @return bool Whether any refresh token was deleted.
+	 */
+	public static function revoke_unlisted_refresh_tokens( $user_id ) {
+		return self::revoke_refresh_tokens(
+			$user_id,
+			function ( $device ) use ( $user_id ) {
+				return ! self::is_refresh_token_device_allowed( $user_id, $device );
+			}
+		);
+	}
+
+	/**
 	 * Sanitize the device name.
 	 *
 	 * @param string $device The device name.
 	 * @return string The sanitized device name.
 	 */
-	private function sanitize_device_name( $device ) {
+	private static function sanitize_device_name( $device ) {
 
 		$unwanted_chars = array(
 			'Š' => 'S',
@@ -225,6 +349,19 @@ class Devices {
 
 		$this->block_all_tokens( $user->ID );
 	}
+
+	/**
+	 * Fires after the password is set directly with wp_set_password().
+	 *
+	 * @since 6.2.0
+	 *
+	 * @param string $password The plaintext password just set.
+	 * @param int    $user_id  The user id.
+	 */
+	public function after_set_password( $password, $user_id ) {
+
+		$this->block_all_tokens( $user_id );
+	}
 	
 	/**
 	 * Fires after the user' is created
@@ -239,7 +376,7 @@ class Devices {
 	}
 
 	/**
-	 * Block all access tokens.
+	 * Block all access tokens and refresh tokens.
 	 *
 	 * @param int $user_id The user id.
 	 */
@@ -248,17 +385,24 @@ class Devices {
 		// Clear devices list with access.
 		delete_user_meta( $user_id, 'jwt_auth_device' );
 
+		// Revoke all refresh tokens.
+		delete_user_meta( $user_id, 'jwt_auth_refresh_tokens' );
+		delete_user_meta( $user_id, 'jwt_auth_refresh_tokens_expires_next' );
+
 		global $wpdb;
 
-		// ! Can we not using a direct database call? Because it is discouraged in wpcs.
-		// This is because performance. The key jwt_auth_device_% is has generic key name, so this is necessary. The query uses prepare() to avoid insections anyway
+		// The device details are stored under one meta key per device (jwt_auth_device_*),
+		// which the metadata API cannot delete by prefix. The query is prepared, and the
+		// user's meta cache is cleared below.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query(
 			$wpdb->prepare(
 				"DELETE FROM $wpdb->usermeta WHERE user_id = %d AND meta_key LIKE %s",
 				$user_id,
-				'jwt_auth_device_%'
+				$wpdb->esc_like( 'jwt_auth_device_' ) . '%'
 			)
 		);
+		wp_cache_delete( $user_id, 'user_meta' );
 
 		// Add a hash for the new password.
 		$this->refresh_pass( $user_id );
@@ -284,18 +428,31 @@ class Devices {
 	 */
 	public function remove_device() {
 
-		$nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] )) : ''; 
-		$device  = isset( $_POST['device'] ) ? sanitize_text_field( $_POST['device'] ) : ''; // phpcs:ignore
-		$user_id = isset( $_POST['user_id'] ) && is_numeric( $_POST['user_id'] ) ? absint( $_POST['user_id'] ) : 0; // phpcs:ignore
-		
-		if(!wp_verify_nonce( $nonce, 'jwt_auth_remove_device_'.$user_id)){
+		$nonce   = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
+		$device  = isset( $_POST['device'] ) ? self::get_device_name( wp_unslash( $_POST['device'] ) ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized by get_device_name().
+		$user_id = isset( $_POST['user_id'] ) && is_numeric( $_POST['user_id'] ) ? absint( $_POST['user_id'] ) : 0;
+
+		if ( ! wp_verify_nonce( $nonce, 'jwt_auth_remove_device_' . $user_id ) || ! current_user_can( 'edit_user', $user_id ) || '' === $device ) {
 			wp_send_json_error();
 			wp_die();
 			return;
 		}
 
-		if ( delete_user_meta( $user_id, 'jwt_auth_device', $device ) ) {
+		$removed = delete_user_meta( $user_id, 'jwt_auth_device', $device );
+		if ( $removed ) {
 			delete_user_meta( $user_id, $this->sanitize_device_key( $device ) );
+		}
+
+		// Revoke the device's refresh tokens. They are stored under the device
+		// value the app sent, so compare by the name the device is listed under.
+		$revoked = self::revoke_refresh_tokens(
+			$user_id,
+			function ( $token_device ) use ( $device ) {
+				return self::get_device_name( $token_device ) === $device;
+			}
+		);
+
+		if ( $removed || $revoked ) {
 			wp_send_json_success();
 		} else {
 			wp_send_json_error();
@@ -341,10 +498,8 @@ class Devices {
 
 		$user_id = absint( $atts['user_id'] );
 
-		if ( get_current_user_id() !== $user_id ) {
-			if ( ! current_user_can( 'administrator' ) ) {
-				return '';
-			}
+		if ( ! current_user_can( 'edit_user', $user_id ) ) {
+			return '';
 		}
 
 		$devices = get_user_meta( $user_id, 'jwt_auth_device', false );

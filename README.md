@@ -213,6 +213,8 @@ Whenever you are authenticating afresh or refreshing the refresh token, only the
 
 This means that a refresh token cannot be shared. To allow multiple devices to authenticate in parallel without losing access after another device re-authenticated, use the parameter `device` with the device identifier to associate the refresh token only with that device.
 
+All refresh tokens of a user are revoked when their password is changed or reset. Removing a device from the user's connected devices revokes the refresh token of that device; the app must then log in with username and password again.
+
 ```sh
 curl -F device="abc-def" -F username=myuser -F password=mypass /wp-json/jwt-auth/v1/token
 ```
